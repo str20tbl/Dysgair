@@ -1,0 +1,1832 @@
+{{set . "title" "Analytics Dashboard"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreStyles" "app/analytics.css"}}
+{{append . "moreScripts" "js/vendor.chartjs.min.js"}}
+{{append . "moreScripts" "app/chart-utils.js"}}
+{{append . "moreScripts" "app/table-utils.js"}}
+{{append . "moreScripts" "app/analytics.js"}}
+{{template "header.html" .}}
+
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Analytics Dashboard</h1>
+    <h1 class="h2 fw-bold cy">Bwrdd Dadansoddi</h1>
+    <p class="text-muted en">Statistical analysis of ASR model performance for pronunciation learning research</p>
+    <p class="text-muted cy">Dadansoddiad ystadegol o berfformiad model ASR ar gyfer ymchwil dysgu ynganu</p>
+</div>
+
+<div class="container pb-6">
+    <!-- Filter Panel -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title mb-4 en">Filters & Controls</h5>
+            <h5 class="card-title mb-4 cy">Hidlwyr a Rheolyddion</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small en">User</label>
+                    <label class="form-label small cy">Defnyddiwr</label>
+                    <select id="filterUser" class="form-select form-select-sm">
+                        <option value="0">All Users / Pob Defnyddiwr</option>
+                        {{range .users}}
+                        <option value="{{.ID}}">{{.Username}} ({{.Email}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">&nbsp;</label>
+                    <button id="btnLoadAnalytics" class="btn btn-primary btn-sm w-100">
+                        <i class="fi fi-refresh"></i>
+                        <span class="en">Load Analytics</span>
+                        <span class="cy">Llwytho Dadansoddiad</span>
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">&nbsp;</label>
+                    <button id="btnExportLaTeX" class="btn btn-success btn-sm w-100" disabled>
+                        <i class="fi fi-download"></i>
+                        <span class="en">Export for LaTeX</span>
+                        <span class="cy">Allforio ar gyfer LaTeX</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Dissertation Chart Export Row -->
+            <div class="row g-3 mt-2">
+                <div class="col-md-12">
+                    <button id="btnExportDissertation" class="btn btn-outline-primary btn-sm w-100" disabled>
+                        <i class="fi fi-download"></i>
+                        <span class="en">📥 Export for Dissertation (5 Charts)</span>
+                        <span class="cy">📥 Allforio ar gyfer Traethawd Hir (5 Siart)</span>
+                    </button>
+                    <small class="text-muted d-block mt-1 en">Downloads: modelComparison.png, phonologicalCategories.png, errorAttribution.png, digraphAnalysis.png, difficultWords.png</small>
+                    <small class="text-muted d-block mt-1 cy">Yn lawrlwytho: modelComparison.png, phonologicalCategories.png, errorAttribution.png, digraphAnalysis.png, difficultWords.png</small>
+                </div>
+            </div>
+            <div id="loadingIndicator" class="mt-3">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated progress-bar-full-width" role="progressbar"></div>
+                </div>
+                <small class="text-muted en">Analyzing data...</small>
+                <small class="text-muted cy">Yn dadansoddi data...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Executive Summary Card (Section 0) -->
+    <div class="card mb-4 border-primary">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">Executive Summary</h5>
+                    <h5 class="card-title cy mb-0">Crynodeb Gweithredol</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="executive-summary">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">High-level overview of key findings for MSc thesis</p>
+            <p class="small text-muted cy">Trosolwg lefel uchel o ganfyddiadau allweddol ar gyfer traethawd MSc</p>
+
+            <!-- Row 1: Sample Size Metrics -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-primary" id="summaryTotalRecordings">-</div>
+                            <small class="text-muted en">Total Recordings</small>
+                            <small class="text-muted cy">Cyfanswm Recordiadau</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-primary" id="summaryTotalWords">-</div>
+                            <small class="text-muted en">Unique Words</small>
+                            <small class="text-muted cy">Geiriau Unigryw</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 1B: Recordings Per Word Statistics -->
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <div class="card bg-info bg-opacity-10">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-info" id="summaryAvgRecordingsPerWord">-</div>
+                            <small class="text-muted en">Avg Recordings/Word</small>
+                            <small class="text-muted cy">Cyfartaledd Recordiadau/Gair</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info bg-opacity-10">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-info" id="summaryMinRecordingsPerWord">-</div>
+                            <small class="text-muted en">Min Recordings/Word</small>
+                            <small class="text-muted cy">Lleiaf Recordiadau/Gair</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-info bg-opacity-10">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-info" id="summaryMaxRecordingsPerWord">-</div>
+                            <small class="text-muted en">Max Recordings/Word</small>
+                            <small class="text-muted cy">Mwyaf Recordiadau/Gair</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Raw CER Metrics (Technical Performance) -->
+            <div class="row g-3 mb-2">
+                <div class="col-12">
+                    <h6 class="text-muted en mb-0"><small>Raw CER (Technical Accuracy - for benchmarking)</small></h6>
+                    <h6 class="text-muted cy mb-0"><small>CER Crai (Cywirdeb Technegol - ar gyfer meincnodi)</small></h6>
+                </div>
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="card bg-light border-primary">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-primary" id="summaryWhisperCER">-</div>
+                            <small class="text-muted">Whisper</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-light border-danger">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-danger" id="summaryWav2Vec2CER">-</div>
+                            <small class="text-muted">Wav2Vec2</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 3: Normalized CER Metrics (Pedagogical Utility) -->
+            <div class="row g-3 mb-2">
+                <div class="col-12">
+                    <h6 class="text-success en mb-0"><small>✓ Normalized CER (Pedagogical Utility - for CAPT)</small></h6>
+                    <h6 class="text-success cy mb-0"><small>✓ CER Normaleiddiwyd (Defnyddioldeb Addysgegol - ar gyfer CAPT)</small></h6>
+                </div>
+            </div>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-success bg-opacity-10 border-success">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-success" id="summaryWhisperCERNorm">-</div>
+                            <small class="text-muted">Whisper</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-success bg-opacity-10 border-success">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-success" id="summaryWav2Vec2CERNorm">-</div>
+                            <small class="text-muted">Wav2Vec2</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success" role="alert">
+                <h6 class="alert-heading en">Overall Winner: <span id="summaryWinner" class="fw-bold">-</span></h6>
+                <h6 class="alert-heading cy">Enillydd Cyffredinol: <span id="summaryWinnerCy" class="fw-bold">-</span></h6>
+                <p class="mb-0" id="summaryKeyFinding">-</p>
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <h6 class="en">Raw Metrics Advantage</h6>
+                    <h6 class="cy">Mantais Metrigau Crai</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td class="en">Percentage Point Difference</td>
+                                <td class="cy">Gwahaniaeth Pwynt Canran</td>
+                                <td class="text-end fw-bold" id="summaryRawPctDiff">-</td>
+                            </tr>
+                            <tr>
+                                <td class="en">Relative Improvement</td>
+                                <td class="cy">Gwelliant Cymharol</td>
+                                <td class="text-end fw-bold" id="summaryRawRelImprovement">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="en">Normalized Metrics Advantage</h6>
+                    <h6 class="cy">Mantais Metrigau Normaleiddiwyd</h6>
+                    <table class="table table-sm">
+                        <tbody>
+                            <tr>
+                                <td class="en">Percentage Point Difference</td>
+                                <td class="cy">Gwahaniaeth Pwynt Canran</td>
+                                <td class="text-end fw-bold" id="summaryNormPctDiff">-</td>
+                            </tr>
+                            <tr>
+                                <td class="en">Relative Improvement</td>
+                                <td class="cy">Gwelliant Cymharol</td>
+                                <td class="text-end fw-bold" id="summaryNormRelImprovement">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Comparison Card (Section 1 - Enhanced) -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">1. Model Performance Comparison (CER-Focused)</h5>
+                    <h5 class="card-title cy mb-0">1. Cymhariaeth Perfformiad Modelau (Ffocws CER)</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="model-comparison">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Character Error Rate (CER) comparison - primary metric for single-word Welsh pronunciation</p>
+            <p class="small text-muted cy">Cymhariaeth Cyfradd Gwall Nod (CER) - metrig cynradd ar gyfer ynganu Cymraeg un gair</p>
+
+            <div class="alert alert-info mb-3">
+                <small class="en"><strong>Chart Legend:</strong> Ghost bars (lighter/transparent) = Raw CER (strict matching with punctuation), Solid bars (darker/opaque) = Normalized CER (lenient matching, pedagogically relevant)</small>
+                <small class="cy"><strong>Allwedd Siart:</strong> Bariau ysbryd (ysgafnach/tryloyw) = CER Crai (paru llym gydag atalnodi), Bariau solet (tywyllach/afloyw) = CER Normaleiddiwyd (paru hyblyg, perthnasol yn addysgegol)</small>
+            </div>
+            <div class="row mb-3">
+                <div class="col-12">
+                    <canvas id="chartModelComparison" height="150"></canvas>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <table class="table table-sm table-striped" id="tableModelStats">
+                        <thead>
+                            <tr>
+                                <th>Statistic</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="2" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Phonological Error Analysis Card (Section 2) - Merged with Character Errors -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">2. Phonological Error Analysis for CAPT Suitability</h5>
+                    <h5 class="card-title cy mb-0">2. Dadansoddiad Gwallau Ffonolegol ar gyfer Addasrwydd CAPT</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="linguistic-patterns">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Which Welsh sounds cause ASR errors? Critical for evaluating CAPT suitability for L2 pronunciation training</p>
+            <p class="small text-muted cy">Pa seiniau Cymraeg sy'n achosi gwallau ASR? Hanfodol ar gyfer gwerthuso addasrwydd CAPT ar gyfer hyfforddiant ynganu L2</p>
+
+            <!-- Part A: Welsh Phonological Challenges Overview -->
+            <h6 class="text-primary mt-3 mb-3 en">A. Welsh Phonological Challenges Overview</h6>
+            <h6 class="text-primary mt-3 mb-3 cy">A. Trosolwg o Heriau Ffonolegol Cymraeg</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div id="phonoHardestCategory">
+                        <div class="text-center text-muted">Loading...</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div id="phonoHardestDigraph">
+                        <div class="text-center text-muted">Loading...</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div id="phonoCaptVerdict">
+                        <div class="text-center text-muted">Loading...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part B: Category-Level Error Rates -->
+            <h6 class="text-primary mt-4 mb-3 en">B. Error Rates by Phonological Category</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">B. Cyfraddau Gwall yn ôl Categori Ffonolegol</h6>
+
+            <div class="alert alert-info mb-3">
+                <small class="en"><strong>Understanding the charts:</strong> Solid bars = Normalized (pedagogically relevant errors) | Ghost bars = Raw (technical accuracy with punctuation)</small>
+                <small class="cy"><strong>Deall y siartiau:</strong> Bariau solet = Normaleiddiwyd (gwallau perthnasol yn addysgegol) | Bariau ysbryd = Crai (cywirdeb technegol gydag atalnodi)</small>
+            </div>
+
+            <!-- Combined overview chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartPhonologicalCategories" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Part C: Welsh Digraph Analysis -->
+            <h6 class="text-primary mt-4 mb-3 en">C. Welsh-Specific Digraph Performance</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">C. Perfformiad Deuseiniau Penodol Cymraeg</h6>
+
+            <div class="alert alert-warning mb-3" id="digraphCAPTInsight">
+                <strong class="en">Critical for Welsh CAPT:</strong>
+                <span class="en">Welsh digraphs (ll, ch, dd, etc.) represent unique sounds not found in English. </span>
+                <span class="en" id="digraphInsightText">Loading...</span>
+
+                <strong class="cy">Hanfodol ar gyfer CAPT Cymraeg:</strong>
+                <span class="cy">Mae deuseiniau Cymraeg (ll, ch, dd, ayb) yn cynrychioli seiniau unigryw nad ydynt yn bodoli yn Saesneg. </span>
+                <span class="cy" id="digraphInsightTextCy">Yn llwytho...</span>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartDigraphAnalysis" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Part D: Confusion Matrices - What Gets Confused? -->
+            <h6 class="text-primary mt-4 mb-3 en">D. Confusion Matrices - What Gets Confused?</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">D. Matricsau Dryswch - Beth Sy'n Cael Ei Ddrysu?</h6>
+
+            <div class="alert alert-info mb-3" id="confusionCAPTInsight">
+                <small class="en"><strong>CAPT Interpretation:</strong> <span id="confusionInsightText">Loading...</span></small>
+                <small class="cy"><strong>Dehongliad CAPT:</strong> <span id="confusionInsightTextCy">Yn llwytho...</span></small>
+            </div>
+
+            <ul class="nav nav-tabs mb-3" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="tab-confusion-overall" data-bs-toggle="tab" data-bs-target="#tabpane-confusion-overall" type="button" role="tab">
+                        <span class="en">Overall</span>
+                        <span class="cy">Cyffredinol</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-confusion-vowels" data-bs-toggle="tab" data-bs-target="#tabpane-confusion-vowels" type="button" role="tab">
+                        <span class="en">Vowels</span>
+                        <span class="cy">Llafariaid</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-confusion-consonants" data-bs-toggle="tab" data-bs-target="#tabpane-confusion-consonants" type="button" role="tab">
+                        <span class="en">Consonants</span>
+                        <span class="cy">Cytseiniaid</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="tab-confusion-digraphs" data-bs-toggle="tab" data-bs-target="#tabpane-confusion-digraphs" type="button" role="tab">
+                        <span class="en">Digraphs</span>
+                        <span class="cy">Deuseiniau</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content">
+                <!-- Overall Tab -->
+                <div class="tab-pane fade show active" id="tabpane-confusion-overall" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary">Whisper</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWhisperOverall">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-danger">Wav2Vec2</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWav2Vec2Overall">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vowels Tab -->
+                <div class="tab-pane fade" id="tabpane-confusion-vowels" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary">Whisper - Vowel Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWhisperVowels">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-danger">Wav2Vec2 - Vowel Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWav2Vec2Vowels">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Consonants Tab -->
+                <div class="tab-pane fade" id="tabpane-confusion-consonants" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary">Whisper - Consonant Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWhisperConsonants">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-danger">Wav2Vec2 - Consonant Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWav2Vec2Consonants">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Digraphs Tab -->
+                <div class="tab-pane fade" id="tabpane-confusion-digraphs" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-primary">Whisper - Digraph Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWhisperDigraphs">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3 text-danger">Wav2Vec2 - Digraph Confusions</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover confusion-matrix-table">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th width="10%" class="en">Rank</th>
+                                            <th width="10%" class="cy">Safle</th>
+                                            <th width="30%" class="en">Expected</th>
+                                            <th width="30%" class="cy">Disgwyliedig</th>
+                                            <th width="30%" class="en">Got Instead</th>
+                                            <th width="30%" class="cy">Cafwyd Yn Lle</th>
+                                            <th width="30%" class="text-end en">Occurrences</th>
+                                            <th width="30%" class="text-end cy">Digwyddiadau</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tableConfusionWav2Vec2Digraphs">
+                                        <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part E: Top Problematic Characters -->
+            <h6 class="text-primary mt-4 mb-3 en">E. Top 15 Most Problematic Sounds</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">E. 15 Sain Fwyaf Problemus</h6>
+
+            <p class="small text-muted en">Combined analysis showing characters and digraphs with highest error rates across both models</p>
+            <p class="small text-muted cy">Dadansoddiad cyfun yn dangos nodau a deuseiniau gyda'r cyfraddau gwall uchaf ar draws y ddau fodel</p>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="char-error-chart-container" style="height: 400px;">
+                        <canvas id="chartCharErrorsCombined"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part F: Improvement from Normalization -->
+            <h6 class="text-primary mt-4 mb-3 en">F. Impact of Normalization by Category</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">F. Effaith Normaleiddio yn ôl Categori</h6>
+
+            <p class="small text-muted en">Average improvement across both models (Whisper + Wav2Vec2)</p>
+            <p class="small text-muted cy">Gwelliant cyfartalog ar draws y ddau fodel (Whisper + Wav2Vec2)</p>
+
+            <div class="row">
+                <div class="col-12">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Category</th>
+                                <th class="cy">Categori</th>
+                                <th class="en">Raw Avg</th>
+                                <th class="cy">Cyfartaledd Crai</th>
+                                <th class="en">Normalized Avg</th>
+                                <th class="cy">Cyfartaledd Norm</th>
+                                <th class="en">Improvement</th>
+                                <th class="cy">Gwelliant</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableNormalizationImpact">
+                            <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comprehensive Error Analysis (Merged Sections 3 & 4) -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">3. Comprehensive Error Analysis for CAPT Suitability</h5>
+                    <h5 class="card-title cy mb-0">3. Dadansoddiad Gwall Cynhwysfawr ar gyfer Addasrwydd CAPT</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="comprehensive-errors">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Comprehensive analysis combining error source (attribution), pedagogical impact (costs), and CAPT suitability assessment</p>
+            <p class="small text-muted cy">Dadansoddiad cynhwysfawr sy'n cyfuno ffynhonnell gwall (priodoliad), effaith addysgegol (costau), ac asesiad addasrwydd CAPT</p>
+
+            <!-- Part A: System Accuracy Overview -->
+            <h6 class="text-primary mt-3 mb-3 en">A. System Accuracy Overview</h6>
+            <h6 class="text-primary mt-3 mb-3 cy">A. Trosolwg Cywirdeb System</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card bg-light border">
+                        <div class="card-body">
+                            <h6 class="en mb-3">Raw System Accuracy (Technical)</h6>
+                            <h6 class="cy mb-3">Cywirdeb System Crai (Technegol)</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="display-6 fw-bold text-primary" id="systemAccuracyWhisperRaw">-</div>
+                                    <small class="text-muted">Whisper</small>
+                                </div>
+                                <div class="col-6">
+                                    <div class="display-6 fw-bold text-danger" id="systemAccuracyWav2Vec2Raw">-</div>
+                                    <small class="text-muted">Wav2Vec2</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card bg-success bg-opacity-10 border-success">
+                        <div class="card-body">
+                            <h6 class="en mb-3">✓ Normalized System Accuracy (Pedagogical)</h6>
+                            <h6 class="cy mb-3">✓ Cywirdeb System Normaleiddiwyd (Addysgegol)</h6>
+                            <div class="row text-center">
+                                <div class="col-6">
+                                    <div class="display-6 fw-bold text-success" id="systemAccuracyWhisperNorm">-</div>
+                                    <small class="text-muted">Whisper</small>
+                                </div>
+                                <div class="col-6">
+                                    <div class="display-6 fw-bold text-success" id="systemAccuracyWav2Vec2Norm">-</div>
+                                    <small class="text-muted">Wav2Vec2</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success">
+                <h6 class="alert-heading en">CAPT Suitability Assessment</h6>
+                <h6 class="alert-heading cy">Asesiad Addasrwydd CAPT</h6>
+                <div id="captSuitabilityInsight">
+                    <p class="small mb-1 en"><strong>Loading...</strong></p>
+                </div>
+            </div>
+
+            <!-- Part B: Error Attribution - Where Do Errors Come From? -->
+            <h6 class="text-primary mt-4 mb-3 en">B. Error Attribution - Where Do Errors Come From?</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">B. Priodoliad Gwallau - O Ble Mae Gwallau'n Dod?</h6>
+
+            <div class="alert alert-info mb-3">
+                <small class="en"><strong>Understanding Error Sources:</strong> CORRECT (green) = system gives correct feedback | ASR_ERROR (orange) = user pronounced correctly but ASR failed | USER_ERROR (yellow) = user mispronounced | AMBIGUOUS (gray) = unclear/edge cases</small>
+                <small class="cy"><strong>Deall Ffynonellau Gwallau:</strong> CORRECT (gwyrdd) = system yn rhoi adborth cywir | ASR_ERROR (oren) = defnyddiwr ynganu'n gywir ond ASR wedi methu | USER_ERROR (melyn) = defnyddiwr camynganu | AMBIGUOUS (llwyd) = aneg lur/achosion ymylol</small>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartErrorAttribution" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Part C: Error Costs - What Is The Pedagogical Impact? -->
+            <h6 class="text-primary mt-4 mb-3 en">C. Error Costs - What Is The Pedagogical Impact?</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">C. Costau Gwallau - Beth Yw'r Effaith Addysgegol?</h6>
+
+            <div class="alert alert-warning mb-3">
+                <strong class="en">Critical for Learning:</strong>
+                <strong class="cy">Hanfodol ar gyfer Dysgu:</strong>
+                <span class="en">False Acceptance (red) = most harmful (teaches incorrect pronunciation) | False Rejection (orange) = demotivating but safer | True Positive (dark green) = ideal outcome | True Negative (gray) = correct rejection</span>
+                <span class="cy">Derbyniad Ffug (coch) = mwyaf niweidiol (dysgu ynganiad anghywir) | Gwrthod Ffug (oren) = digalonni ond mwy diogel | Positif Gwir (gwyrdd tywyll) = canlyniad delfrydol | Negatif Gwir (llwyd) = gwrthod cywir</span>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartErrorCosts" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Part D: Safety Metrics -->
+            <h6 class="text-primary mt-4 mb-3 en">D. Pedagogical Safety Metrics</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">D. Metrigau Diogelwch Addysgegol</h6>
+
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="en">Raw Safety Scores</h6>
+                            <h6 class="cy">Sgoriau Diogelwch Crai</h6>
+                            <table class="table table-sm mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td>Whisper</td>
+                                        <td class="text-end fw-bold" id="errorCostWhisperSafetyRaw">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Wav2Vec2</td>
+                                        <td class="text-end fw-bold" id="errorCostWav2Vec2SafetyRaw">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success bg-opacity-10 border-success">
+                        <div class="card-body">
+                            <h6 class="en">Normalized Safety Scores</h6>
+                            <h6 class="cy">Sgoriau Diogelwch Normaleiddiwyd</h6>
+                            <table class="table table-sm mb-0">
+                                <tbody>
+                                    <tr>
+                                        <td>Whisper</td>
+                                        <td class="text-end fw-bold text-success" id="errorCostWhisperSafetyNorm">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Wav2Vec2</td>
+                                        <td class="text-end fw-bold text-success" id="errorCostWav2Vec2SafetyNorm">-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h6 class="en">Safer Model</h6>
+                            <h6 class="cy">Model Mwy Diogel</h6>
+                            <h5 class="mb-2" id="errorCostSaferModelRaw">-</h5>
+                            <p class="mb-0 small" id="errorCostRecommendationRaw">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-success" role="alert">
+                <h6 class="alert-heading en">Impact of Normalization on Safety</h6>
+                <h6 class="alert-heading cy">Effaith Normaleiddio ar Ddiogelwch</h6>
+                <div class="row">
+                    <div class="col-md-6">
+                        <p class="small mb-0" id="errorCostWhisperImprovement">-</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p class="small mb-0" id="errorCostWav2Vec2Improvement">-</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Part E: Detailed Breakdown Tables -->
+            <h6 class="text-primary mt-4 mb-3 en">E. Detailed Breakdown</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">E. Dadansoddiad Manwl</h6>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <span class="en">Error Cost Breakdown by Model</span>
+                        <span class="cy">Dadansoddiad Cost Gwall yn ôl Model</span>
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="en">Model</th>
+                                    <th class="cy">Model</th>
+                                    <th class="text-center en">Error Type</th>
+                                    <th class="text-center cy">Math o Wall</th>
+                                    <th class="text-center en">Count</th>
+                                    <th class="text-center cy">Cyfrif</th>
+                                    <th class="text-center en">Rate (%)</th>
+                                    <th class="text-center cy">Cyfradd (%)</th>
+                                    <th class="text-center en">Harm Level</th>
+                                    <th class="text-center cy">Lefel Niwed</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableErrorCosts">
+                                <tr><td colspan="6" class="text-muted text-center">No data loaded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <span class="en">Error Attribution Distribution</span>
+                        <span class="cy">Dosbarthiad Priodoliad Gwallau</span>
+                    </h6>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Category</th>
+                                <th class="cy">Categori</th>
+                                <th>Whisper (Raw)</th>
+                                <th>Whisper (Norm)</th>
+                                <th>Wav2Vec2 (Raw)</th>
+                                <th>Wav2Vec2 (Norm)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableErrorAttribution">
+                            <tr><td colspan="6" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Agreement Analysis Card (Section 4 - NEW) -->
+    <div class="card mb-4 border-info">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">4. Model Agreement Analysis</h5>
+                    <h5 class="card-title cy mb-0">4. Dadansoddiad Cytundeb Modelau</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="inter-rater-reliability">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Inter-rater reliability: how often both ASR models agree on transcription correctness</p>
+            <p class="small text-muted cy">Dibynadwyedd rhyng-raddwyr: pa mor aml mae'r ddau fodel ASR yn cytuno ar gywirdeb trawsgrifiad</p>
+
+            <!-- Overall Agreement Rate -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-info bg-opacity-10 border-info">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-info" id="agreementRate">-</div>
+                            <small class="text-muted en">Overall Agreement Rate</small>
+                            <small class="text-muted cy">Cyfradd Cytundeb Cyffredinol</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <div class="display-6 fw-bold text-muted" id="agreementSampleSize">-</div>
+                            <small class="text-muted en">Sample Size</small>
+                            <small class="text-muted cy">Maint Sampl</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="en">Interpretation</h6>
+                            <h6 class="cy">Dehongliad</h6>
+                            <p class="small mb-0" id="agreementInterpretation">
+                                <span class="en">Loading...</span>
+                                <span class="cy">Yn llwytho...</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Agreement Pattern Breakdown -->
+            <h6 class="text-primary mt-4 mb-3 en">Agreement Pattern Breakdown</h6>
+            <h6 class="text-primary mt-4 mb-3 cy">Dadansoddiad Patrwm Cytundeb</h6>
+
+            <div class="alert alert-info mb-3">
+                <small class="en"><strong>Understanding Agreement Patterns:</strong> Both Correct (green) = both models transcribe correctly | Both Incorrect (red) = both models fail | Whisper Only (blue) = only Whisper correct | Wav2Vec2 Only (orange) = only Wav2Vec2 correct</small>
+                <small class="cy"><strong>Deall Patrymau Cytundeb:</strong> Y Ddau Gywir (gwyrdd) = y ddau fodel yn trawsgrifio'n gywir | Y Ddau Anghywir (coch) = y ddau fodel yn methu | Whisper Yn Unig (glas) = dim ond Whisper yn gywir | Wav2Vec2 Yn Unig (oren) = dim ond Wav2Vec2 yn gywir</small>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartModelAgreement" height="200"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Agreement Statistics Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <span class="en">Detailed Agreement Statistics</span>
+                        <span class="cy">Ystadegau Cytundeb Manwl</span>
+                    </h6>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Agreement Pattern</th>
+                                <th class="cy">Patrwm Cytundeb</th>
+                                <th class="text-center en">Count</th>
+                                <th class="text-center cy">Cyfrif</th>
+                                <th class="text-center en">Percentage</th>
+                                <th class="text-center cy">Canran</th>
+                                <th class="text-center en">Implication</th>
+                                <th class="text-center cy">Goblygiad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableModelAgreement">
+                            <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CAPT Suitability Insight -->
+            <div class="alert alert-success mt-4">
+                <h6 class="alert-heading en">CAPT Suitability Insight</h6>
+                <h6 class="alert-heading cy">Mewnwelediad Addasrwydd CAPT</h6>
+                <p class="small mb-0" id="agreementCAPTInsight">
+                    <span class="en">Loading...</span>
+                    <span class="cy">Yn llwytho...</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Difficult Words Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">5. Most Challenging Words for ASR</h5>
+                    <h5 class="card-title cy mb-0">5. Geiriau Mwyaf Heriol i ASR</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="challenging-words">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Words that remain difficult AFTER normalization - true phonological challenges, not punctuation issues</p>
+            <p class="small text-muted cy">Geiriau sy'n parhau'n anodd AR ÔL normaleiddio - heriau ffonolegol gwirioneddol, nid materion atalnodi</p>
+
+            <div class="alert alert-warning mb-3">
+                <strong class="en">Focus: Pedagogically Relevant Challenges</strong>
+                <strong class="cy">Ffocws: Heriau Perthnasol yn Addysgegol</strong>
+                <p class="small mb-0 en">This section shows words with <strong>normalized CER &gt; 5%</strong> - these are genuine pronunciation difficulties, not formatting issues. Solid bars show normalized (pedagogically relevant) CER, ghost bars show raw CER for context. Words with very low normalized CER have been filtered out (punctuation-only issues).</p>
+                <p class="small mb-0 cy">Mae'r adran hon yn dangos geiriau gyda <strong>CER normaleiddiwyd &gt; 5%</strong> - dyma anawsterau ynganu gwirioneddol, nid materion fformatio. Mae bariau solet yn dangos CER normaleiddiwyd (perthnasol yn addysgegol), mae bariau ysbryd yn dangos CER crai ar gyfer cyd-destun.</p>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <canvas id="chartTopDifficultWords" height="300"></canvas>
+                </div>
+            </div>
+
+            <!-- Drill-down Table for Challenging Words -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <span class="en">Top 10 Most Challenging Words</span>
+                        <span class="cy">10 Gair Mwyaf Heriol</span>
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="en">Word</th>
+                                    <th class="cy">Gair</th>
+                                    <th class="text-center en">Attempts</th>
+                                    <th class="text-center cy">Ymgais</th>
+                                    <th class="text-center en">Whisper<br>Raw / Norm</th>
+                                    <th class="text-center cy">Whisper<br>Crai / Norm</th>
+                                    <th class="text-center en">Wav2Vec2<br>Raw / Norm</th>
+                                    <th class="text-center cy">Wav2Vec2<br>Crai / Norm</th>
+                                    <th class="text-center en">Improvement</th>
+                                    <th class="text-center cy">Gwelliant</th>
+                                    <th class="text-center en">Category</th>
+                                    <th class="text-center cy">Categori</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableChallengingWords">
+                                <tr><td colspan="6" class="text-muted text-center">No data loaded</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Word Length Analysis Card (Section 5B - NEW) -->
+    <div class="card mb-4 border-primary">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">5B. Performance by Word Length</h5>
+                    <h5 class="card-title cy mb-0">5B. Perfformiad yn ôl Hyd Gair</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="word-length">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Analysis of ASR performance grouped by word length (character count)</p>
+            <p class="small text-muted cy">Dadansoddiad o berfformiad ASR wedi'i grwpio yn ôl hyd gair (cyfrif nodau)</p>
+
+            <!-- Summary Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted small en">Short Words (1-3)</h6>
+                            <h6 class="text-muted small cy">Geiriau Byr (1-3)</h6>
+                            <div class="display-6 fw-bold" id="wordLengthCount13">-</div>
+                            <small class="text-muted">words / geiriau</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted small en">Medium Words (4-6)</h6>
+                            <h6 class="text-muted small cy">Geiriau Canolig (4-6)</h6>
+                            <div class="display-6 fw-bold" id="wordLengthCount46">-</div>
+                            <small class="text-muted">words / geiriau</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted small en">Long Words (7-9)</h6>
+                            <h6 class="text-muted small cy">Geiriau Hir (7-9)</h6>
+                            <div class="display-6 fw-bold" id="wordLengthCount79">-</div>
+                            <small class="text-muted">words / geiriau</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="text-muted small en">Very Long (10+)</h6>
+                            <h6 class="text-muted small cy">Hynod Hir (10+)</h6>
+                            <div class="display-6 fw-bold" id="wordLengthCount10">-</div>
+                            <small class="text-muted">words / geiriau</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <canvas id="chartWordLength" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <h6 class="mb-3">
+                        <span class="en">CER by Word Length Category (Normalized Metrics)</span>
+                        <span class="cy">CER yn ôl Categori Hyd Gair (Metrigau Normaledig)</span>
+                    </h6>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Length Category</th>
+                                <th class="cy">Categori Hyd</th>
+                                <th class="text-center en">Word Count</th>
+                                <th class="text-center cy">Cyfrif Geiriau</th>
+                                <th class="text-center en">Whisper CER</th>
+                                <th class="text-center cy">CER Whisper</th>
+                                <th class="text-center en">Wav2Vec2 CER</th>
+                                <th class="text-center cy">CER Wav2Vec2</th>
+                                <th class="text-center en">Trend</th>
+                                <th class="text-center cy">Tuedd</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableWordLength">
+                            <tr><td colspan="5" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Insight Box -->
+            <div class="alert alert-info mt-4">
+                <h6 class="alert-heading en">Length-Complexity Correlation</h6>
+                <h6 class="alert-heading cy">Cydberthyniad Hyd-Cymhlethdod</h6>
+                <p class="small mb-0" id="wordLengthInsight">
+                    <span class="en">Loading...</span>
+                    <span class="cy">Yn llwytho...</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- CER Distribution Card (Section 6 - renumbered) -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">6. CER Distribution Across Words</h5>
+                    <h5 class="card-title cy mb-0">6. Dosbarthiad CER ar Draws Geiriau</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="cer-distribution">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Distribution of ASR error rates across vocabulary - shows which words are suitable for pronunciation training. Lower CER ranges indicate better CAPT suitability.</p>
+            <p class="small text-muted cy">Dosbarthiad cyfraddau gwall ASR ar draws geirfa - yn dangos pa eiriau sy'n addas ar gyfer hyfforddiant ynganu. Mae ystodau CER is yn dangos addasrwydd CAPT gwell.</p>
+
+            <div class="row">
+                <div class="col-12">
+                    <canvas id="chartWordDifficulty" height="80"></canvas>
+                </div>
+            </div>
+
+            <!-- Distribution Data Tables -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <h6 class="text-muted en">Raw CER Distribution</h6>
+                    <h6 class="text-muted cy">Dosbarthiad CER Crai</h6>
+                    <table class="table table-sm table-bordered" id="wordDifficultyRaw">
+                        <thead>
+                            <tr>
+                                <th class="en">CER Range</th>
+                                <th class="cy">Ystod CER</th>
+                                <th>Whisper</th>
+                                <th>Wav2Vec2</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-muted en">Normalized CER Distribution</h6>
+                    <h6 class="text-muted cy">Dosbarthiad CER Normaleiddiwyd</h6>
+                    <table class="table table-sm table-bordered" id="wordDifficultyNormalized">
+                        <thead>
+                            <tr>
+                                <th class="en">CER Range</th>
+                                <th class="cy">Ystod CER</th>
+                                <th>Whisper</th>
+                                <th>Wav2Vec2</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Consistency & Reliability Card (Section 7 - renumbered) -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">7. Consistency & Reliability Analysis</h5>
+                    <h5 class="card-title cy mb-0">7. Dadansoddiad Cysondeb a Dibynadwyedd</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="consistency">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Beyond average accuracy: variance, stability, and predictability of ASR feedback</p>
+            <p class="small text-muted cy">Y tu hwnt i gywirdeb cyfartalog: amrywiad, sefydlogrwydd a rhagfynegadwyedd adborth ASR</p>
+
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="en">More Consistent</h6>
+                            <h6 class="cy">Mwy Cyson</h6>
+                            <div class="display-6 fw-bold text-primary" id="consistencyWinner">-</div>
+                            <small class="text-muted en">Lower coefficient of variation</small>
+                            <small class="text-muted cy">Cyfernod amrywiant is</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h6 class="en">More Reliable</h6>
+                            <h6 class="cy">Mwy Dibynadwy</h6>
+                            <div class="display-6 fw-bold text-success" id="reliabilityWinner">-</div>
+                            <small class="text-muted en">Higher reliability score</small>
+                            <small class="text-muted cy">Sgôr dibynadwyedd uwch</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="en">Interpretation</h6>
+                            <h6 class="cy">Dehongliad</h6>
+                            <p class="small mb-0" id="consistencyInterpretation">-</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <h6 class="en">Detailed Metrics (Raw CER)</h6>
+                    <h6 class="cy">Metrigau Manwl (CER Crai)</h6>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Metric</th>
+                                <th class="cy">Metrig</th>
+                                <th>Whisper</th>
+                                <th>Wav2Vec2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableConsistencyMetricsRaw">
+                            <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <h6 class="text-success en">✓ Detailed Metrics (Normalized CER)</h6>
+                    <h6 class="text-success cy">✓ Metrigau Manwl (CER Normaleiddiwyd)</h6>
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th class="en">Metric</th>
+                                <th class="cy">Metrig</th>
+                                <th>Whisper</th>
+                                <th>Wav2Vec2</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableConsistencyMetricsNorm">
+                            <tr><td colspan="4" class="text-muted text-center">No data loaded</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Qualitative Examples Card (Section 8 - renumbered) -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">8. Qualitative Examples</h5>
+                    <h5 class="card-title cy mb-0">8. Enghreifftiau Ansawddol</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="examples">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Representative examples illustrating quantitative findings</p>
+            <p class="small text-muted cy">Enghreifftiau cynrychiadol yn darlunio canfyddiadau meintiol</p>
+
+            <div class="accordion" id="accordionExamples">
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBothCorrect">
+                            <span class="en">Both Models Correct (<span id="exampleBothCorrectCount">0</span>)</span>
+                            <span class="cy">Y Ddau Fodel yn Gywir (<span id="exampleBothCorrectCountCy">0</span>)</span>
+                        </button>
+                    </h2>
+                    <div id="collapseBothCorrect" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="tableExamplesBothCorrect">
+                                    <thead>
+                                        <tr>
+                                            <th class="en">Target</th>
+                                            <th class="cy">Targed</th>
+                                            <th class="en">Human</th>
+                                            <th class="cy">Dynol</th>
+                                            <th>Whisper</th>
+                                            <th>Wav2Vec2</th>
+                                            <th class="text-center en">Actions</th>
+                                            <th class="text-center cy">Gweithredoedd</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWhisperOnly">
+                            <span class="en">Whisper Only Correct (<span id="exampleWhisperOnlyCount">0</span>)</span>
+                            <span class="cy">Whisper yn Unig yn Gywir (<span id="exampleWhisperOnlyCountCy">0</span>)</span>
+                        </button>
+                    </h2>
+                    <div id="collapseWhisperOnly" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="tableExamplesWhisperOnly">
+                                    <thead>
+                                        <tr>
+                                            <th class="en">Target</th>
+                                            <th>Human</th>
+                                            <th>Whisper</th>
+                                            <th>Wav2Vec2</th>
+                                            <th class="text-center en">Actions</th>
+                                            <th class="text-center cy">Gweithredoedd</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseWav2Vec2Only">
+                            <span class="en">Wav2Vec2 Only Correct (<span id="exampleWav2Vec2OnlyCount">0</span>)</span>
+                            <span class="cy">Wav2Vec2 yn Unig yn Gywir (<span id="exampleWav2Vec2OnlyCountCy">0</span>)</span>
+                        </button>
+                    </h2>
+                    <div id="collapseWav2Vec2Only" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="tableExamplesWav2Vec2Only">
+                                    <thead>
+                                        <tr>
+                                            <th class="en">Target</th>
+                                            <th>Human</th>
+                                            <th>Whisper</th>
+                                            <th>Wav2Vec2</th>
+                                            <th class="text-center en">Actions</th>
+                                            <th class="text-center cy">Gweithredoedd</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePedagogicalCritical">
+                            <span class="en">Pedagogically Critical Errors (<span id="exampleCriticalCount">0</span>)</span>
+                            <span class="cy">Gwallau Critigol yn Addysgegol (<span id="exampleCriticalCountCy">0</span>)</span>
+                        </button>
+                    </h2>
+                    <div id="collapsePedagogicalCritical" class="accordion-collapse collapse">
+                        <div class="accordion-body">
+                            <div class="alert alert-warning">
+                                <strong class="en">Warning:</strong> <span class="en">These cases show false acceptance: learner pronounced incorrectly, but ASR matched the target word and failed to detect the error (harmful - reinforces bad pronunciation habits)</span>
+                                <strong class="cy">Rhybudd:</strong> <span class="cy">Mae'r achosion hyn yn dangos derbyniad ffug: ynganodd y dysgwr yn anghywir, ond roedd ASR yn cyfateb i'r gair targed ac yn methu â chanfod y gwall (niweidiol - yn atgyfnerthu arferion ynganu gwael)</span>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="tableExamplesCritical">
+                                    <thead>
+                                        <tr>
+                                            <th class="en">Target</th>
+                                            <th>Human</th>
+                                            <th>Whisper</th>
+                                            <th>Wav2Vec2</th>
+                                            <th class="en">Critical Model(s)</th>
+                                            <th class="text-center en">Actions</th>
+                                            <th class="text-center cy">Gweithredoedd</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Design & Limitations Card (Section 9 - renumbered) -->
+    <div class="card mb-4 border-warning">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">9. Study Design & Limitations</h5>
+                    <h5 class="card-title cy mb-0">9. Cynllun Astudiaeth a Chyfyngiadau</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="study-design">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Methodological transparency for MSc thesis</p>
+            <p class="small text-muted cy">Tryloywder methodolegol ar gyfer traethawd MSc</p>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="en">Study Type</h6>
+                    <h6 class="cy">Math o Astudiaeth</h6>
+                    <p id="studyType" class="fw-bold">-</p>
+
+                    <h6 class="en mt-3">Statistical Approach</h6>
+                    <h6 class="cy mt-3">Dull Ystadegol</h6>
+                    <p id="studyStatisticalApproach" class="small">-</p>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="en">Data Collection</h6>
+                    <h6 class="cy">Casglu Data</h6>
+                    <ul id="studyDataCollection" class="small">
+                        <li>-</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="alert alert-warning">
+                <h6 class="alert-heading en">Limitations</h6>
+                <h6 class="alert-heading cy">Cyfyngiadau</h6>
+                <ul id="studyLimitations" class="small mb-0">
+                    <li>-</li>
+                </ul>
+            </div>
+
+            <div class="alert alert-success">
+                <h6 class="alert-heading en">Strengths</h6>
+                <h6 class="alert-heading cy">Cryfderau</h6>
+                <ul id="studyStrengths" class="small mb-0">
+                    <li>-</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Practical Recommendations Card (Section 10 - renumbered) -->
+    <div class="card mb-4 border-success">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">10. Practical Recommendations</h5>
+                    <h5 class="card-title cy mb-0">10. Argymhellion Ymarferol</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-primary export-section-btn" data-section="recommendations">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">Actionable guidance for Welsh CAPT system design based on findings</p>
+            <p class="small text-muted cy">Arweiniad gweithredadwy ar gyfer cynllun system CAPT Cymraeg yn seiliedig ar ganfyddiadau</p>
+
+            <div class="alert alert-primary mb-4">
+                <h6 class="alert-heading en">Primary Recommendation</h6>
+                <h6 class="alert-heading cy">Prif Argymhelliad</h6>
+                <h4 id="recommendedModel" class="mb-2">-</h4>
+                <p id="recommendationRationale" class="mb-0">-</p>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h6 class="en">System Design Implications</h6>
+                    <h6 class="cy">Goblygiadau Cynllun System</h6>
+                    <ul id="recommendationSystemDesign" class="small">
+                        <li>-</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="en">Pedagogical Considerations</h6>
+                    <h6 class="cy">Ystyriaethau Addysgegol</h6>
+                    <ul id="recommendationPedagogical" class="small">
+                        <li>-</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="en">Features Requiring Human Verification</h6>
+                    <h6 class="cy">Nodweddion sy'n Gofyn am Wirio Dynol</h6>
+                    <ul id="recommendationHumanVerification" class="small mb-0">
+                        <li>-</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 11: Hybrid System Analysis (COMPREHENSIVE) -->
+    <div class="card mb-4 border-success bg-success bg-opacity-10">
+        <div class="card-body p-lg-4">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <h5 class="card-title en mb-0">11. Hybrid System Analysis: Intelligent Model Selection for Welsh CAPT</h5>
+                    <h5 class="card-title cy mb-0">11. Dadansoddiad System Hybrid: Dewis Modelau Deallus ar gyfer CAPT Cymraeg</h5>
+                </div>
+                <button class="btn btn-sm btn-outline-success export-section-btn" data-section="hybrid-analysis">
+                    <span class="en">📄 Export Section</span>
+                    <span class="cy">📄 Allforio Adran</span>
+                </button>
+            </div>
+            <p class="small text-muted en">
+                Theoretical upper bound analysis: performance achievable through intelligent per-word model selection
+                vs. single-model deployment. Evaluates the practical value of a hybrid ASR architecture for Welsh CAPT.
+            </p>
+            <p class="small text-muted cy">
+                Dadansoddiad terfyn uchaf damcaniaethol: perfformiad y gellir ei gyflawni trwy ddewis model deallus fesul gair
+                vs. defnyddio un model. Yn gwerthuso gwerth ymarferol pensaernïaeth ASR hybrid ar gyfer CAPT Cymraeg.
+            </p>
+
+            <!-- Overall Performance Summary -->
+            <h6 class="text-uppercase text-muted mt-3 mb-3 en">Overall Performance Summary</h6>
+            <h6 class="text-uppercase text-muted mt-3 mb-3 cy">Crynodeb Perfformiad Cyffredinol</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="card border-primary">
+                        <div class="card-body text-center">
+                            <small class="text-muted en">Best Single Model CER</small>
+                            <small class="text-muted cy">CER Model Sengl Gorau</small>
+                            <div class="display-6 fw-bold text-primary" id="hybridOverallBestModelCER">-</div>
+                            <small class="text-muted" id="hybridBestModelName">-</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-success">
+                        <div class="card-body text-center">
+                            <small class="text-muted en">Hybrid Best-Case CER</small>
+                            <small class="text-muted cy">CER Achos Gorau Hybrid</small>
+                            <div class="display-6 fw-bold text-success" id="hybridOverallHybridCER">-</div>
+                            <small class="text-muted en">Intelligent selection</small>
+                            <small class="text-muted cy">Dewis deallus</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-info">
+                        <div class="card-body text-center">
+                            <small class="text-muted en">Absolute Improvement</small>
+                            <small class="text-muted cy">Gwelliant Absoliwt</small>
+                            <div class="display-6 fw-bold text-info" id="hybridOverallAbsoluteImprovement">-</div>
+                            <small class="text-muted en">percentage points</small>
+                            <small class="text-muted cy">pwyntiau canran</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-warning">
+                        <div class="card-body text-center">
+                            <small class="text-muted en">Relative Improvement</small>
+                            <small class="text-muted cy">Gwelliant Cymharol</small>
+                            <div class="display-6 fw-bold text-warning" id="hybridOverallRelativeImprovement">-</div>
+                            <small class="text-muted en">error reduction</small>
+                            <small class="text-muted cy">lleihad gwallau</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Critical Areas Breakdown -->
+            <h6 class="text-uppercase text-muted mb-3 en">Critical CAPT Areas: Detailed Comparison</h6>
+            <h6 class="text-uppercase text-muted mb-3 cy">Meysydd CAPT Critigol: Cymhariaeth Fanwl</h6>
+            <div class="row g-3 mb-4">
+                <!-- Welsh Digraphs -->
+                <div class="col-md-4">
+                    <div class="card border-warning h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-warning en">
+                                <i data-feather="alert-triangle" class="feather-sm"></i> Welsh Digraphs
+                            </h6>
+                            <h6 class="card-subtitle mb-2 text-warning cy">
+                                <i data-feather="alert-triangle" class="feather-sm"></i> Deuseiniau Cymraeg
+                            </h6>
+                            <p class="small text-muted mb-2">ll, ch, dd, ff, ng, rh, ph, th</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <small class="text-muted en">Best Single</small>
+                                        <small class="text-muted cy">Sengl Gorau</small>
+                                        <div class="h5 fw-bold text-primary mb-0" id="hybridDigraphsBestCER">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                        <small class="text-muted en">Hybrid</small>
+                                        <small class="text-muted cy">Hybrid</small>
+                                        <div class="h5 fw-bold text-success mb-0" id="hybridDigraphsHybridCER">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <span class="badge bg-info" id="hybridDigraphsImprovement">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Difficult Words -->
+                <div class="col-md-4">
+                    <div class="card border-danger h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-danger en">
+                                <i data-feather="alert-circle" class="feather-sm"></i> Most Difficult Words
+                            </h6>
+                            <h6 class="card-subtitle mb-2 text-danger cy">
+                                <i data-feather="alert-circle" class="feather-sm"></i> Geiriau Anoddaf
+                            </h6>
+                            <p class="small text-muted mb-2 en">Top 10 challenging words</p>
+                            <p class="small text-muted mb-2 cy">10 gair mwyaf heriol</p>
+                            <div class="row g-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <small class="text-muted en">Best Single</small>
+                                        <small class="text-muted cy">Sengl Gorau</small>
+                                        <div class="h5 fw-bold text-primary mb-0" id="hybridDifficultBestCER">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                        <small class="text-muted en">Hybrid</small>
+                                        <small class="text-muted cy">Hybrid</small>
+                                        <div class="h5 fw-bold text-success mb-0" id="hybridDifficultHybridCER">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center mt-2">
+                                <span class="badge bg-info" id="hybridDifficultImprovement">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Error Reduction Potential -->
+                <div class="col-md-4">
+                    <div class="card border-success h-100">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-success en">
+                                <i data-feather="trending-down" class="feather-sm"></i> Error Reduction Potential
+                            </h6>
+                            <h6 class="card-subtitle mb-2 text-success cy">
+                                <i data-feather="trending-down" class="feather-sm"></i> Potensial Lleihau Gwallau
+                            </h6>
+                            <div class="row g-2 mb-2">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <small class="text-muted en">Total ASR Errors</small>
+                                        <small class="text-muted cy">Cyfanswm Gwallau</small>
+                                        <div class="h5 fw-bold text-danger mb-0" id="hybridErrorsTotal">-</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-success bg-opacity-10 rounded">
+                                        <small class="text-muted en">Preventable</small>
+                                        <small class="text-muted cy">Y gellir eu hatal</small>
+                                        <div class="h5 fw-bold text-success mb-0" id="hybridErrorsPreventable">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-center">
+                                <span class="badge bg-info" id="hybridErrorsReduction">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comparison Chart -->
+            <h6 class="text-uppercase text-muted mb-3 en">Critical Areas Performance Comparison</h6>
+            <h6 class="text-uppercase text-muted mb-3 cy">Cymhariaeth Perfformiad Meysydd Critigol</h6>
+            <div class="mb-4" style="height: 300px;">
+                <canvas id="chartHybridAnalysis"></canvas>
+            </div>
+
+            <!-- Statistical Analysis -->
+            <h6 class="text-uppercase text-muted mb-3 en">Statistical Analysis</h6>
+            <h6 class="text-uppercase text-muted mb-3 cy">Dadansoddiad Ystadegol</h6>
+            <div class="row g-3 mb-4">
+                <div class="col-md-6">
+                    <div class="card border-secondary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted en">Effect Size (Cohen's d)</h6>
+                            <h6 class="card-subtitle mb-2 text-muted cy">Maint Effaith (Cohen's d)</h6>
+                            <div class="text-center">
+                                <div class="display-6 fw-bold" id="hybridEffectSize">-</div>
+                                <span class="badge" id="hybridEffectSizeInterpretation">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-secondary">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted en">Model Selection Statistics</h6>
+                            <h6 class="card-subtitle mb-2 text-muted cy">Ystadegau Dewis Model</h6>
+                            <div class="small">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="en">Entries Analyzed:</span>
+                                    <span class="cy">Cofnodion Dadansoddwyd:</span>
+                                    <strong id="hybridSampleSize">-</strong>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted en">When Performance Differs:</span>
+                                        <span class="text-muted cy">Pan Mae Perfformiad yn Wahanol:</span>
+                                    </div>
+                                    <div class="small" id="hybridModelPref">-</div>
+                                </div>
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted en">Performance Ties:</span>
+                                        <span class="text-muted cy">Canlyniadau Cyfartal:</span>
+                                    </div>
+                                    <div class="small" id="hybridTiesPct">-</div>
+                                </div>
+                                <div>
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="text-muted en">Metrics Used:</span>
+                                        <span class="text-muted cy">Metrigau a Ddefnyddiwyd:</span>
+                                    </div>
+                                    <div class="small" id="hybridNormPref">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Academic Interpretation & Deployment Recommendation -->
+            <div class="alert alert-success">
+                <h6 class="alert-heading en">
+                    <i data-feather="book-open" class="feather-sm"></i> Academic Interpretation
+                </h6>
+                <h6 class="alert-heading cy">
+                    <i data-feather="book-open" class="feather-sm"></i> Dehongliad Academaidd
+                </h6>
+                <p class="mb-2" id="hybridAcademicInterpretation">
+                    <span class="en">-</span>
+                    <span class="cy">-</span>
+                </p>
+                <hr>
+                <h6 class="en">
+                    <i data-feather="check-circle" class="feather-sm"></i> Deployment Recommendation
+                </h6>
+                <h6 class="cy">
+                    <i data-feather="check-circle" class="feather-sm"></i> Argymhelliad Defnyddio
+                </h6>
+                <p class="mb-0" id="hybridDeploymentRecommendation">
+                    <strong class="en">-</strong>
+                    <strong class="cy">-</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="notificationHeader">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i id="notificationIcon" class="me-2"></i>
+                    <span id="notificationTitle"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-pill btn-secondary" data-bs-dismiss="modal">
+                    <span class="en">Close</span>
+                    <span class="cy">Cau</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "footer.html" .}}

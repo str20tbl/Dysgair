@@ -1,0 +1,267 @@
+{{set . "title" "Transcription Review"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreStyles" "app/transcription-review.css"}}
+{{append . "moreStyles" "css/vendor.datatables.min.css"}}
+{{append . "moreScripts" "js/vendor.datatables.min.js"}}
+{{append . "moreScripts" "app/transcription-review.js"}}
+{{template "header.html" .}}
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Transcription Review & Analysis</h1>
+    <h1 class="h2 fw-bold cy">Adolygu a Dadansoddi Trawsgrifiadau</h1>
+</div>
+
+<div class="container pb-6">
+    <!-- Filter Panel -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title mb-4 en">Filters</h5>
+            <h5 class="card-title mb-4 cy">Hidlwyr</h5>
+            <div class="row g-3">
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small en">User</label>
+                    <label class="form-label small cy">Defnyddiwr</label>
+                    <select id="filterUser" class="form-select form-select-sm">
+                        <option value="0">All Users / Pob Defnyddiwr</option>
+                        {{range .users}}
+                        <option value="{{.ID}}">{{.Username}} ({{.Email}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small en">Target Word</label>
+                    <label class="form-label small cy">Gair Targed</label>
+                    <input type="text" id="filterWord" class="form-control form-control-sm" placeholder="Search...">
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small en">Error Attribution</label>
+                    <label class="form-label small cy">Priodoli Gwall</label>
+                    <select id="filterAttribution" class="form-select form-select-sm">
+                        <option value="ALL">All / Pob</option>
+                        <option value="ASR_ERROR">ASR Error</option>
+                        <option value="USER_ERROR">User Error</option>
+                        <option value="AMBIGUOUS">Ambiguous</option>
+                        <option value="CORRECT">Correct</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <label class="form-label small en">Review Status</label>
+                    <label class="form-label small cy">Statws Adolygu</label>
+                    <select id="filterReview" class="form-select form-select-sm">
+                        <option value="ALL">All / Pob</option>
+                        <option value="REVIEWED">Reviewed</option>
+                        <option value="UNREVIEWED">Unreviewed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="btn-group mb-2 me-2" role="group">
+                        <button id="btnApplyFilter" class="btn btn-primary btn-sm btn-pill">
+                            <i class="fi fi-filter"></i>
+                            <span class="en">Apply</span>
+                            <span class="cy">Gweithredu</span>
+                        </button>
+                    </div>
+                    <div class="btn-group mb-2 me-2" role="group">
+                        <button id="btnExportCSV" class="btn btn-success btn-sm btn-pill">
+                            <i class="fi fi-download"></i>
+                            <span class="en">CSV</span>
+                            <span class="cy">CSV</span>
+                        </button>
+                        <button id="btnExportJSON" class="btn btn-success btn-sm btn-pill">
+                            <i class="fi fi-download"></i>
+                            <span class="en">JSON</span>
+                            <span class="cy">JSON</span>
+                        </button>
+                    </div>
+                    <div class="btn-group mb-2" role="group">
+                        <button id="btnRecalculateAll" class="btn btn-warning btn-sm btn-pill">
+                            <i class="fi fi-refresh"></i>
+                            <span class="en">Recalculate Metrics</span>
+                            <span class="cy">Ailgyfrifo</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+        <div class="card-body p-lg-4">
+            <div class="table-responsive">
+                <table id="transcriptionsTable" class="table table-sm table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="text-center" rowspan="2" style="width: 50px; vertical-align: middle;">ID</th>
+                            <th rowspan="2" style="min-width: 100px; vertical-align: middle;"><span class="en">User</span><span class="cy">Defnyddiwr</span></th>
+                            <th rowspan="2" style="min-width: 80px; vertical-align: middle;"><span class="en">Target</span><span class="cy">Targed</span></th>
+                            <th colspan="3" class="text-center" style="border-bottom: 1px solid #dee2e6;">Whisper</th>
+                            <th colspan="3" class="text-center" style="border-bottom: 1px solid #dee2e6;">Wav2Vec2</th>
+                            <th rowspan="2" style="min-width: 100px; vertical-align: middle;"><span class="en">Human</span><span class="cy">Dynol</span></th>
+                            <th rowspan="2" style="min-width: 120px; vertical-align: middle;"><span class="en">Audio</span><span class="cy">Sain</span></th>
+                            <th rowspan="2" class="text-center" style="width: 80px; vertical-align: middle;"><span class="en">Status</span><span class="cy">Statws</span></th>
+                            <th rowspan="2" class="text-center" style="width: 60px; vertical-align: middle;">
+                                <i class="fi fi-pencil" title="Edit"></i>
+                            </th>
+                            <th rowspan="2" class="text-center" style="width: 70px; vertical-align: middle;">
+                                <i class="fi fi-check" title="Review"></i>
+                            </th>
+                        </tr>
+                        <tr>
+                            <th style="min-width: 80px; font-size: 0.85em;"><span class="en">ASR</span></th>
+                            <th class="text-center" style="width: 50px; font-size: 0.85em;" title="Word Error Rate">WER%</th>
+                            <th class="text-center" style="width: 50px; font-size: 0.85em;" title="Character Error Rate">CER%</th>
+                            <th style="min-width: 80px; font-size: 0.85em;"><span class="en">ASR</span></th>
+                            <th class="text-center" style="width: 50px; font-size: 0.85em;" title="Word Error Rate">WER%</th>
+                            <th class="text-center" style="width: 50px; font-size: 0.85em;" title="Character Error Rate">CER%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transcriptionsBody">
+                        <!-- Data loaded via AJAX -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title en">Edit Human Transcription</h5>
+                <h5 class="modal-title cy">Golygu Trawsgrifiad Dynol</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEntryId">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label small en">Target Word</label>
+                        <label class="form-label small cy">Gair Targed</label>
+                        <input type="text" id="editTargetWord" class="form-control form-control-sm" readonly>
+                    </div>
+                </div>
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6">
+                        <label class="form-label small en"><strong>Whisper ASR</strong></label>
+                        <label class="form-label small cy"><strong>Whisper ASR</strong></label>
+                        <input type="text" id="editWhisper" class="form-control form-control-sm" readonly>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small en"><strong>Wav2Vec2 ASR</strong></label>
+                        <label class="form-label small cy"><strong>Wav2Vec2 ASR</strong></label>
+                        <input type="text" id="editWav2Vec2" class="form-control form-control-sm" readonly>
+                    </div>
+                </div>
+                <div class="mb-3 mt-3">
+                    <label class="form-label small en"><strong>Human Transcription</strong></label>
+                    <label class="form-label small cy"><strong>Trawsgrifiad Dynol</strong></label>
+                    <input type="text" id="editHuman" class="form-control" placeholder="Enter human transcription...">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small en">Audio Recording</label>
+                    <label class="form-label small cy">Recordiad Sain</label>
+                    <audio id="editAudio" controls class="w-100" style="height: 40px;"></audio>
+                </div>
+                <div id="metricsDisplay" class="card bg-light" style="display:none;">
+                    <div class="card-body p-3">
+                        <h6 class="card-title mb-3 en">Calculated Metrics - Comparative Analysis</h6>
+                        <h6 class="card-title mb-3 cy">Metrigau Cyfrifedig - Dadansoddiad Cymharol</h6>
+                        <div class="row g-3 small">
+                            <div class="col-md-6">
+                                <div class="border-start border-primary border-3 ps-2">
+                                    <div class="fw-bold">Whisper</div>
+                                    <div class="mt-1"><span class="text-muted">WER:</span> <span id="displayWERWhisper" class="fw-bold">-</span>%</div>
+                                    <div><span class="text-muted">CER:</span> <span id="displayCERWhisper" class="fw-bold">-</span>%</div>
+                                    <div class="mt-1"><span class="text-muted en">Accuracy:</span><span class="text-muted cy">Cywirdeb:</span> <span id="displayAccuracyWhisper" class="fw-bold">-</span>%</div>
+                                    <div class="mt-1"><span class="text-muted en">Attribution:</span><span class="text-muted cy">Priodoli:</span> <span id="displayAttributionWhisper">-</span></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border-start border-success border-3 ps-2">
+                                    <div class="fw-bold">Wav2Vec2</div>
+                                    <div class="mt-1"><span class="text-muted">WER:</span> <span id="displayWERWav2Vec2" class="fw-bold">-</span>%</div>
+                                    <div><span class="text-muted">CER:</span> <span id="displayCERWav2Vec2" class="fw-bold">-</span>%</div>
+                                    <div class="mt-1"><span class="text-muted en">Accuracy:</span><span class="text-muted cy">Cywirdeb:</span> <span id="displayAccuracyWav2Vec2" class="fw-bold">-</span>%</div>
+                                    <div class="mt-1"><span class="text-muted en">Attribution:</span><span class="text-muted cy">Priodoli:</span> <span id="displayAttributionWav2Vec2">-</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-pill btn-secondary" data-bs-dismiss="modal">
+                    <span class="en">Close</span>
+                    <span class="cy">Cau</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-pill btn-primary" id="btnSaveTranscription">
+                    <span class="en">Save</span>
+                    <span class="cy">Cadw</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Review Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title en">Mark as Reviewed</h5>
+                <h5 class="modal-title cy">Marcio fel wedi Adolygu</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="reviewEntryId">
+                <div class="mb-3">
+                    <label class="form-label small en">Notes (optional)</label>
+                    <label class="form-label small cy">Nodiadau (dewisol)</label>
+                    <small class="form-text text-muted d-block mb-2 en">Add notes about audio quality, noise, or disfluencies</small>
+                    <small class="form-text text-muted d-block mb-2 cy">Ychwanegwch nodiadau am ansawdd sain, sŵn, neu anrhuglder</small>
+                    <textarea id="reviewNotes" class="form-control form-control-sm" rows="4" placeholder="Notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-pill btn-secondary" data-bs-dismiss="modal">
+                    <span class="en">Close</span>
+                    <span class="cy">Cau</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-pill btn-success" id="btnMarkReviewed">
+                    <i class="fi fi-check"></i>
+                    <span class="en">Mark as Reviewed</span>
+                    <span class="cy">Marcio fel wedi Adolygu</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header" id="notificationHeader">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i id="notificationIcon" class="me-2"></i>
+                    <span id="notificationTitle"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="notificationMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-pill btn-secondary" data-bs-dismiss="modal">
+                    <span class="en">Close</span>
+                    <span class="cy">Cau</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "footer.html" .}}

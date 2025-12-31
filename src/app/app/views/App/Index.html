@@ -1,0 +1,117 @@
+{{set . "title" "Home"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{template "header.html" .}}
+<!-- Cover -->
+<div class="container py-5">
+    <div class="row text-center-xs align-items-center">
+        <div class="col-12 col-md-6 order-2 order-md-1 pb-1" data-aos="fade-in" data-aos-delay="0">
+            <div class="mb-5">
+                <h1 class="fw-bold mb-3">
+                    <span class="position-relative display-3 fw-bold cy logo_text">
+                        Ymarferion Ynganu
+                    </span>
+                    <span class="position-relative display-3 fw-bold en logo_text">
+                        Pronunciation Practice
+                    </span>
+                    <span class="position-relative d-inline-block fw-bold mt-3">
+                        <span class="text-danger-gradient mb-3 cy">Efo adborth awtomatig</span>
+                        <span class="text-danger-gradient mb-3 en">With automatic feedback</span>
+                        <svg height="20" class="svg-drawlines position-absolute start-0 bottom-0" viewBox="0 0 154 13">
+                            <path fill="none"
+                                  d="M2 2c49.7 2.6 100 3.1 150 1.7-46.5 2-93 4.4-139.2 7.3 45.2-1.5 90.6-1.8 135.8-.6"
+                                  vector-effect="non-scaling-stroke" stroke-linejoin="round"
+                                  stroke-linecap="round"></path>
+                        </svg>
+                    </span>
+                </h1>
+                <p class="lead cy">
+                    Gwella eich ynganiad un gair ar y tro – rhowch gynnig ar ein ap a siaradwch yn hyderus!
+                </p>
+                <p class="lead en">
+                    Improve your pronunciation one word at a time – try our app and speak with confidence!
+                </p>
+                <div class="mt-5">
+                    <a href="/Register?reg=true"
+                       class="btn btn-danger shadow-danger-xlg row-pill fw-medium d-inline-flex align-items-center px-4 mb-3">
+                        <span class="me-3 cy">Cywyn Arni</span>
+                        <span class="me-3 en">Get Started</span>
+                        <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
+                             class="bi bi-arrow-right-short" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
+                                  d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"></path>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <!-- image -->
+        <div class="col-12 col-md-6 order-1 order-md-2 pb-1 align-items-center" data-aos="fade-in" data-aos-delay="200">
+            <img width="600" height="400" class="img-fluid lazy px-5" data-src="/public/images/logo/logo.png"
+                 src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="...">
+        </div>
+    </div>
+</div>
+<!-- /Cover -->
+<div class="section py-5">
+    <div class="container">
+        <div class="row g-xl-5">
+            <div class="col-12 col-lg-4">
+                <div class="sticky-kit z-index-0 js-stickified" style="">
+                    <p>
+                        <span class="cy">
+                            Perffeithiwch eich ynganiad Cymraeg trwy recordio geiriau unigol a derbyn adborth ar
+                            unwaith ar gywirdeb eich siarad.
+                        </span>
+                        <span class="en">
+                            Perfect your Welsh pronunciation by recording individual words and receiving instant
+                            feedback on your speaking accuracy.
+                        </span>
+                    </p>
+                    <hr/>
+                    <p>
+                        <span class="cy">
+                            Tapiwch y botwm meicroffon pan welwch air Cymraeg yn cael ei ddangos ar y sgrin. Siaradwch
+                            yn glir i mewn i feicroffon eich dyfais, yna tapiwch stop pan fyddwch wedi gorffen.
+                        </span>
+                        <span class="en">
+                            Tap the microphone button when you see a Welsh word displayed on screen. Speak clearly into
+                            your device's microphone, then tap stop when finished.
+                        </span>
+                    </p>
+                    <hr/>
+                    <p>
+                        <span class="cy">
+                            Bydd ein technoleg adnabod lleferydd yn dadansoddi eich ynganiad ac yn darparu adborth ar
+                            unwaith i'ch helpu i wella eich sgiliau siarad Cymraeg.
+                        </span>
+                        <span class="en">
+                            Our speech recognition technology will analyze your pronunciation and provide immediate
+                            feedback to help you improve your Welsh speaking skills.
+                        </span>
+                    </p>
+                    <div class="mt-5">
+                        <a href="/Register?reg=true" target="unsplash" rel="noopener"
+                           class="btn btn-lg btn-outline-danger btn-soft shadow-none w-100">
+                            <span class="cy">Cofrestru</span>
+                            <span class="en">Register</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-12 col-lg-8">
+                <div class="bg-white shadow-primary-xs mb-5">
+                    <img height="500" class="img-fluid lazy rounded"
+                         src="/public/images/screenshot_cy.png"
+                         alt="..." data-loaded="true">
+                </div>
+                <div class="bg-white shadow-primary-xs mb-5">
+                    <img height="500" class="img-fluid lazy rounded"
+                         src="/public/images/screenshot_en.png"
+                         alt="..." data-loaded="true">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{template "footer.html" .}}

@@ -1,0 +1,175 @@
+{{set . "title" "Home"}}
+{{template "header.html" .}}
+<div class="section">
+    <div class="container">
+        <div class="col-12 col-sm-10 col-md-8 col-xl-6 order-1 order-xl-2 mx-auto mb-5">
+            <div class="accordion mb-7" id="accordionAccount">
+                <form class="collapse bs-validate {{if not .reg}}show{{end}}" novalidate method="post" action="/Login"
+                      id="accordionAccountSignIn"
+                      data-bs-parent="#accordionAccount">
+                    <div class="text-center mb-6">
+                        <h1 class="display-4 fw-bold en">Welcome</h1>
+                        <h1 class="display-4 fw-bold cy">Croeso</h1>
+                        <p class="lead m-0 en">Sign in to manage your voice</p>
+                        <p class="lead m-0 cy">Mewngofnodi i reoli eich llais</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-body p-5">
+                           <div class="form-floating mb-3">
+                               <input required placeholder="Email" id="account_email" name="username" type="text"
+                                      class="form-control">
+                               <label for="account_email">Ebost</label>
+                           </div>
+                            <div class="input-group-over">
+                                <div class="form-floating mb-3">
+                                    <input required placeholder="Password" id="account_password" name="password"
+                                           type="password" class="form-control">
+                                    <label for="account_password">Cyfrinair</label>
+                                </div>
+                                <a href="#accordionAccountPasswd" class="btn smaller fw-bold en" data-bs-toggle="collapse"
+                                   aria-expanded="true" aria-controls="accordionAccountPasswd">
+                                    RESET?
+                                </a>
+                                <a href="#accordionAccountPasswd" class="btn smaller fw-bold cy" data-bs-toggle="collapse"
+                                   aria-expanded="true" aria-controls="accordionAccountPasswd">
+                                    AILOSOD?
+                                </a>
+                            </div>
+                            <div class="row">
+                                <div class="col-12 col-md-6 mt-4">
+                                    <button type="submit" class="btn btn-primary w-100 fw-medium">
+                                        Mewngofnodi
+                                    </button>
+                                </div>
+                                <div class="col-12 col-md-6 mt-4 text-align-end text-center-xs">
+                                    <a href="#accordionAccountSignUp" class="btn px-0 link-normal en"
+                                       data-bs-toggle="collapse" aria-expanded="true"
+                                       aria-controls="accordionAccountSignUp">
+                                        Don't have an account yet?
+                                    </a>
+                                    <a href="#accordionAccountSignUp" class="btn px-0 link-normal cy"
+                                       data-bs-toggle="collapse" aria-expanded="true"
+                                       aria-controls="accordionAccountSignUp">
+                                        Heb gyfrif hyd yma?
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+                <form class="collapse bs-validate" novalidate method="post" action="/ResetInvite" id="accordionAccountPasswd"
+                      data-bs-parent="#accordionAccount">
+                    <!-- title -->
+                    <div class="text-center mb-6">
+                        <h1 class="display-4 fw-bold en">Password reset</h1>
+                        <h1 class="display-4 fw-bold cy">Ailosod Cyfrinair</h1>
+                        <p class="lead m-0 en">A link to reset your password will be sent to your email!</p>
+                        <p class="lead m-0 cy">Bydd dolen i ailosod eich cyfrinair yn cael ei hanfon i'ch e-bost!</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <div class="form-floating mb-4">
+                                <input required placeholder="Email" id="reset_email" name="resetEmail" type="email"
+                                       class="form-control">
+                                <label for="reset_email" class="cy">Ebost</label>
+                                <label for="reset_email" class="en">Email</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 en">
+                                Reset Password
+                            </button>
+                            <button type="submit" class="btn btn-primary w-100 cy">
+                                Ailosod Cyfrinair
+                            </button>
+                        </div>
+                    </div>
+                    <div class="text-end mt-3">
+                        <a href="#accordionAccountSignIn" class="text-decoration-none en" data-bs-toggle="collapse"
+                           aria-expanded="true" aria-controls="accordionAccountSignIn">
+                            Nevermind, back to signin
+                        </a>
+                        <a href="#accordionAccountSignIn" class="text-decoration-none cy" data-bs-toggle="collapse"
+                           aria-expanded="true" aria-controls="accordionAccountSignIn">
+                            Dim ots, nôl i fewngofnodi
+                        </a>
+                    </div>
+                </form>
+                <form class="collapse bs-validate {{if .reg}}show{{end}}" novalidate method="post" action="/RegUser" id="accordionAccountSignUp"
+                      data-bs-parent="#accordionAccount">
+                    <div class="text-center mb-6">
+                        <h1 class="display-4 fw-bold en">Signup</h1>
+                        <h1 class="display-4 fw-bold cy">Cofrestru</h1>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input required="" placeholder="First Name" id="account_first_name" name="name"
+                               type="text" class="form-control">
+                        <label for="account_first_name" class="cy">Enw Cyntaf</label>
+                        <label for="account_first_name" class="en">First Name</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input required="" placeholder="Last Name" id="account_last_name" name="nameLast"
+                               type="text" class="form-control">
+                        <label for="account_last_name" class="cy">Enw Olaf</label>
+                        <label for="account_last_name" class="en">Last Name</label>
+                    </div>
+
+                    <div class="form-floating mb-3">
+                        <input required="" placeholder="Email" id="account_email_reg" name="email" type="email"
+                               class="form-control">
+                        <label for="account_email_reg" class="cy">Ebost</label>
+                        <label for="account_email_reg" class="en">Email</label>
+                    </div>
+
+                    <div class="input-group-over">
+                        <div class="form-floating mb-3">
+                            <input required="" placeholder="Password" id="account_password_reg" type="password"
+                                   class="form-control" name="password">
+                            <label for="account_password_reg" class="cy">Cyfrinair</label>
+                            <label for="account_password_reg" class="en">Password</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group-over">
+                        <div class="form-floating mb-3">
+                            <input required="" placeholder="Password" id="confirm_password" type="password"
+                                   class="form-control" name="confirm">
+                            <label for="confirm_password" class="cy">Cyfrinair</label>
+                            <label for="confirm_password" class="en">Password</label>
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-2">
+                        <input class="form-check-input form-check-input-default" type="checkbox" value="t"
+                               id="checkDefault" name="terms">
+                        <label class="form-check-label cy" for="checkDefault">Derbyn</label>
+                        <label class="form-check-label en" for="checkDefault">Accept</label>
+                        <a href="#" class="float-end" data-bs-toggle="modal" data-bs-target="#exampleModalXl">
+                            <span class="cy">Amodau a Thelerau</span>
+                            <span class="en">Terms & Conditions</span>
+                        </a>
+                    </div>
+
+                    <div class="row">
+
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary w-100 fw-medium">
+                                <span class="cy">Cofrestru</span>
+                                <span class="en">Sign Up</span>
+                            </button>
+                        </div>
+
+                    </div>
+                    <div class="text-end mt-3">
+                        <a href="#accordionAccountSignIn" class="text-decoration-none en" data-bs-toggle="collapse"
+                           aria-expanded="true" aria-controls="accordionAccountSignIn">Back to Sign In</a>
+                        <a href="#accordionAccountSignIn" class="text-decoration-none cy" data-bs-toggle="collapse"
+                          aria-expanded="true" aria-controls="accordionAccountSignIn">Nôl i Fewngofnodi</a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{{template "App/terms.html" .}}
+{{template "footer.html" .}}

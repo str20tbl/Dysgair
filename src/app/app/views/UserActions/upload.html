@@ -1,0 +1,75 @@
+<!-- Modal -->
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Data Llais {{.user.Username}}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="container">
+          <div class="border-bottom">
+            <h4>Ffeiliau allanol</h4>
+            <p>
+              Mae'n bosib defnyddio ffeiliau allanol, fel rhai sydd wedi recordio mewn stiwdio er enghraifft, os yw'r fformat yn cyfateb i'r isod.
+            </p>
+          </div>
+          <div class="row border-bottom p-3">
+            <div class="col">
+              <p>
+                Y ffolder <code>docker-ttscy</code> ydi'r brif storfa data. Os oes gennych y recordiadau a'r promptiau wedi eu paratoi yn barod, yna dilynwch y goeden yma i ychwanegu'r data.
+              </p>
+              <p>
+                Mae'r data yn dilyn yr un drefn â <a href="https://keithito.com/LJ-Speech-Dataset/">LJSpeech</a>. Os oes gennych ddata mewn fformat gwahanol, sicrhewch fod gan bob pâr o ffeiliau <code>wav</code> a <code>txt</code> yr un enw, yna rhowch y ffeiliau yn y ffolderi wavs a txt. Nid yw'r ffeil <code>metadata.csv</code> yn angenrheidiol, ond fydd y prosesu'n gyflymach o'i chynnwys.
+              </p>
+            </div>
+            <div class="col border-left">
+              <ul class="tree">
+                <li class="branch">
+                  <i data-feather="folder"></i> data
+                  <ul>
+                    <li class="branch">
+                      <i data-feather="folder-minus"></i> preifat
+                    </li>
+                    <li class="branch">
+                      <i data-feather="folder"></i> lleisiau
+                      <ul>
+                        <li class="branch">
+                          <i data-feather="folder"></i> {{.user.UUID}}
+                          <ul>
+                            <li>wavs</li>
+                            <li>txt</li>
+                            <li>metadata.csv</li>
+                          </ul>
+                        </li>
+                        <li>...</li>
+                      </ul>
+                    </li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <h4 class="pt-3">Mewnforio</h4>
+          <form action="{{url "Manage.ImportFromLocal"}}" class="form row" method="post">
+            <input type="hidden" name="uuid" value="{{.user.UUID}}">
+            <div class="col-12">
+              <span>
+                Defnyddiwch y botwm yma unwaith bo'r data wedi ei gopïo i'r lle cywir.
+              </span>
+              <div class="custom-control custom-checkbox">
+                <input class="custom-control-input" id="custom-checkbox-1" name="newPrompts" type="checkbox">
+                <label class="custom-control-label" for="custom-checkbox-1">
+                  Mae gen i bromptiau sydd ddim yn y gronfa data.
+                </label>
+              </div>
+              <div class="form-group float-right">
+                <input type="submit" class="btn btn-primary" value="Mewnforio">
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

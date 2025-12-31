@@ -1,0 +1,55 @@
+/**
+ * Dysgair Recording Interface Styles
+ * Styles for audio recording UI with status indicators
+ */
+
+/* Word Display */
+.word-display .display-4 {
+    color: #2c3e50;
+    letter-spacing: 0.02em;
+}
+
+/* Recording status card */
+#recording-status {
+    background: #f8f9fa;
+    border: 2px solid transparent;
+}
+
+/* Recording indicator dot */
+#recording-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #6c757d;
+    display: none;
+}
+
+/* Status text */
+#status-text {
+    color: #6c757d;
+}
+
+/* Recording timer */
+#recording-timer {
+    font-family: monospace;
+    font-size: 1.1rem;
+    color: #dc3545;
+    display: none;
+}
+
+/* Status message */
+#status-message {
+    min-height: 20px;
+    text-align: center;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 991px) {
+    .word-display .display-4 {
+        font-size: 2.5rem;
+    }
+
+    #start-recording.btn-lg {
+        font-size: 1rem;
+    }
+}

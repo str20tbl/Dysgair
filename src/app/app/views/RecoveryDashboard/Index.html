@@ -1,0 +1,247 @@
+{{set . "title" "Recording Recovery"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreScripts" "app/recovery-dashboard.js"}}
+{{template "header.html" .}}
+
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Recording Recovery Dashboard</h1>
+    <h1 class="h2 fw-bold cy">Bwrdd Adfer Recordiadau</h1>
+    <p class="text-muted en">Match orphaned recordings to words and recover lost data</p>
+    <p class="text-muted cy">Paru recordiadau amddifad â geiriau ac adfer data coll</p>
+</div>
+<div class="container-fluid pb-6">
+    <!-- Session Setup Panel -->
+    <div id="sessionSetupPanel" class="card mb-4" style="display: {{if .sessionUserID}}none{{else}}block{{end}};">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <span class="en">Start Recovery Session</span>
+                <span class="cy">Dechrau Sesiwn Adfer</span>
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="selectUser">
+                            <span class="en">Select Target User</span>
+                            <span class="cy">Dewis Defnyddiwr Targed</span>
+                        </label>
+                        <select id="selectUser" class="form-control">
+                            <option value="">-- Select User --</option>
+                            {{range .users}}
+                            <option value="{{.ID}}">{{.FirstName}} {{.LastName}} ({{.Email}})</option>
+                            {{end}}
+                        </select>
+                        <small class="form-text text-muted">
+                            <span class="en">All recovered entries will be assigned to this user</span>
+                            <span class="cy">Bydd pob cofnod wedi'i adfer yn cael ei neilltuo i'r defnyddiwr hwn</span>
+                        </small>
+                    </div>
+                    <button id="btnStartSession" class="btn btn-primary">
+                        <span class="en">Start Recovery Session</span>
+                        <span class="cy">Dechrau Sesiwn Adfer</span>
+                    </button>
+                </div>
+                <div class="col-md-6">
+                    <div class="alert alert-info">
+                        <h6 class="en">How It Works</h6>
+                        <h6 class="cy">Sut Mae'n Gweithio</h6>
+                        <ul class="mb-0 small">
+                            <li class="en">Recordings are processed backwards in time (newest first)</li>
+                            <li class="en">Exact matches are auto-verified automatically</li>
+                            <li class="en">You can edit Word text/English during recovery</li>
+                            <li class="en">Skip recordings that are unclear or problematic</li>
+                            <li class="cy">Mae recordiadau'n cael eu prosesu yn ôl mewn amser (y newyddaf yn gyntaf)</li>
+                            <li class="cy">Mae parau union yn cael eu dilysu'n awtomatig</li>
+                            <li class="cy">Gallwch olygu testun/Saesneg Gair yn ystod adfer</li>
+                            <li class="cy">Hepgor recordiadau sy'n aneglur neu'n broblemaidd</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recovery Panel -->
+    <div id="recoveryPanel" style="display: {{if .sessionUserID}}block{{else}}none{{end}};">
+        <!-- Progress Bar -->
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <strong class="en">Progress:</strong>
+                        <strong class="cy">Cynnydd:</strong>
+                        <span id="progressText">0 / 0</span>
+                    </div>
+                    <div>
+                        <span class="badge badge-success" id="autoVerifiedBadge">Auto: 0</span>
+                        <span class="badge badge-primary" id="manualVerifiedBadge">Manual: 0</span>
+                        <span class="badge badge-warning" id="skippedBadge">Skipped: 0</span>
+                    </div>
+                    <div>
+                        <button id="btnResetSession" class="btn btn-sm btn-outline-danger">
+                            <span class="en">Reset Session</span>
+                            <span class="cy">Ailosod Sesiwn</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="progress" style="height: 25px;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;">
+                        <span id="progressPercent">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto-verify notification -->
+        <div id="autoVerifyNotification" class="alert alert-success" style="display: none;">
+            <strong class="en">Auto-verified:</strong>
+            <strong class="cy">Dilysedig yn awtomatig:</strong>
+            <span id="autoVerifyCount">0</span>
+            <span class="en">recordings were automatically matched</span>
+            <span class="cy">recordiadau wedi'u paru'n awtomatig</span>
+        </div>
+
+        <!-- Completion message -->
+        <div id="completionMessage" class="alert alert-success" style="display: none;">
+            <h5 class="en">Recovery Complete!</h5>
+            <h5 class="cy">Adferiad Cyflawn!</h5>
+            <p class="mb-0">
+                <span class="en">All recordings have been processed.</span>
+                <span class="cy">Mae pob recordiad wedi'i brosesu.</span>
+            </p>
+        </div>
+
+        <!-- Recording Review Area -->
+        <div id="recordingArea" class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <span class="en">Current Recording</span>
+                    <span class="cy">Recordiad Cyfredol</span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Left Column: Audio & Transcriptions -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="font-weight-bold">
+                                <span class="en">Audio Player</span>
+                                <span class="cy">Chwaraewr Sain</span>
+                            </label>
+                            <audio id="audioPlayer" controls class="w-100" style="height: 50px;">
+                                Your browser does not support the audio element.
+                            </audio>
+                            <small class="text-muted" id="recordingFileName">-</small>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="font-weight-bold">
+                                <span class="en">ASR Transcriptions</span>
+                                <span class="cy">Trawsgrifiadau ASR</span>
+                            </label>
+                            <div class="card bg-light">
+                                <div class="card-body p-2">
+                                    <div class="mb-2">
+                                        <small class="text-muted">Whisper:</small>
+                                        <div id="whisperText" class="font-weight-bold">-</div>
+                                    </div>
+                                    <div>
+                                        <small class="text-muted">Wav2Vec2:</small>
+                                        <div id="wav2vec2Text" class="font-weight-bold">-</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="font-weight-bold">
+                                <span class="en">Actions</span>
+                                <span class="cy">Gweithredoedd</span>
+                            </label>
+                            <div class="d-flex gap-2">
+                                <button id="btnVerifyMatch" class="btn btn-success btn-lg flex-fill" disabled>
+                                    <span class="en">✓ Verify & Next</span>
+                                    <span class="cy">✓ Dilysu & Nesaf</span>
+                                </button>
+                                <button id="btnSkip" class="btn btn-warning btn-lg">
+                                    <span class="en">Skip</span>
+                                    <span class="cy">Hepgor</span>
+                                </button>
+                            </div>
+                            <small class="text-muted">
+                                <span class="en">Keyboard: Enter = Verify | S = Skip | ↑↓ = Navigate matches</span>
+                                <span class="cy">Bysellfwrdd: Enter = Dilysu | S = Hepgor | ↑↓ = Llywio parau</span>
+                            </small>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Word Matches & Editing -->
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label class="font-weight-bold">
+                                <span class="en">Top Word Matches</span>
+                                <span class="cy">Parau Geiriau Gorau</span>
+                            </label>
+                            <div class="mb-2">
+                                <input type="text" id="wordSearch" class="form-control form-control-sm"
+                                       placeholder="Search all 880 words (Welsh or English)...">
+                                <small class="text-muted en">Type to filter word list</small>
+                                <small class="text-muted cy">Teipiwch i hidlo rhestr geiriau</small>
+                            </div>
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-hover">
+                                    <thead class="thead-light sticky-top">
+                                        <tr>
+                                            <th>Welsh</th>
+                                            <th>English</th>
+                                            <th>Score</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matchesTableBody">
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">
+                                                <span class="en">No matches available</span>
+                                                <span class="cy">Dim parau ar gael</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="selectedWordPanel" class="card bg-light" style="display: none;">
+                            <div class="card-body">
+                                <h6 class="en">Selected Word</h6>
+                                <h6 class="cy">Gair Dewiswyd</h6>
+                                <div class="form-group">
+                                    <label>
+                                        <span class="en">Welsh Text</span>
+                                        <span class="cy">Testun Cymraeg</span>
+                                    </label>
+                                    <input type="text" id="editWordText" class="form-control" />
+                                </div>
+                                <div class="form-group">
+                                    <label>
+                                        <span class="en">English Translation</span>
+                                        <span class="cy">Cyfieithiad Saesneg</span>
+                                    </label>
+                                    <input type="text" id="editWordEnglish" class="form-control" />
+                                </div>
+                                <button id="btnUpdateWord" class="btn btn-sm btn-primary">
+                                    <span class="en">Update Word</span>
+                                    <span class="cy">Diweddaru Gair</span>
+                                </button>
+                                <small class="text-muted d-block mt-2">
+                                    <span class="en">Note: Updates will affect all entries using this word</span>
+                                    <span class="cy">Nodyn: Bydd diweddariadau'n effeithio ar bob cofnod sy'n defnyddio'r gair hwn</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "footer.html" .}}

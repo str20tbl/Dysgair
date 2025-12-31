@@ -1,0 +1,63 @@
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+      - db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: dysgair
+      MYSQL_USER: dysgair
+      MYSQL_PASSWORD: password
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_c
+    ports:
+      - "3308:3306"
+
+  redis:
+    image: redis
+    restart: always
+    volumes:
+      - redis_data:/data
+
+  web:
+    build: "./src"
+    restart: always
+    container_name: dysgair
+    command: ["revel", "run", "-a", "app", "-m", "prod"]
+    working_dir: /usr/src
+    volumes:
+      - "./src:/usr/src"
+      - "./data:/data"
+    ports:
+      - "8765:9000"
+    depends_on:
+      - api
+      - db
+      - redis
+
+  api:
+    build: ./api
+    entrypoint: [ "uvicorn", "main:app", "--host", "0.0.0.0", "--reload" ]
+    stdin_open: true
+    tty: true
+    restart: always
+    volumes:
+      - ./api:/workspace
+      - ./data:/data
+    environment:
+      HF_TOKEN: ${HUGGING_FACE_TOKEN}
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ['0']
+              capabilities: [gpu]
+    ports:
+      - "8000:8000"
+
+volumes:
+  redis_data: {}
+  db_data: {}

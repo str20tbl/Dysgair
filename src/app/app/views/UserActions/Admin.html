@@ -1,0 +1,114 @@
+{{set . "title" "Home"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{template "header.html" .}}
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Admin</h1>
+    <h1 class="h2 fw-bold cy">Gweinyddwr</h1>
+</div>
+<div class="container pb-6">
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card mb-3 h-100">
+                <div class="card-body p-lg-4">
+                    <div class="row g-4 position-relative">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Enw</th>
+                                    <th>E-bost</th>
+                                    <th>ID</th>
+                                    <th><i class="fi fi-dots-horizontal-full"></i></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{range .users}}
+                                <tr>
+                                    <td>{{.FirstName}} {{.LastName}}</td>
+                                    <td>{{.Email}}</td>
+                                    <td>{{.ID}}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a class="dropdown-toggle js-stoppropag" href="#"
+                                               role="button" id="exDropdown" data-bs-toggle="dropdown"
+                                               aria-expanded="false">
+                                                <i class="fi fi-dots-horizontal-full"></i>
+                                            </a>
+
+                                            <ul class="dropdown-menu" aria-labelledby="exDropdown" style="">
+                                                <li><a class="dropdown-item cy copy-user-click-{{.ID}}" href="#">Copïo dolen cofrestru</a></li>
+                                                <li><a class="dropdown-item cy del-user-click-{{.ID}}" href="#">Dileu</a></li>
+                                                <li><a class="dropdown-item en copy-user-click-{{.ID}}" href="#">Copy registration link</a></li>
+                                                <li><a class="dropdown-item en del-user-click-{{.ID}}" href="#">Delete</a></li>
+                                            </ul>
+                                            <form action="{{url "UserActions.DeleteUser"}}" id="del-user-{{.ID}}" method="POST">
+                                                <input type="hidden" name="id" value="{{.ID}}">
+                                            </form>
+                                            <script type="text/javascript">
+                                                $(function () {
+                                                    $(".del-user-click-{{.ID}}").click(function () {
+                                                        swal({
+                                                            title: "Rhybudd",
+                                                            text: "Dileu y defnyddiwr yma?",
+                                                            icon: "warning",
+                                                            buttons: true,
+                                                            dangerMode: true
+                                                        }).then((willDelete) => {
+                                                            if (willDelete) {
+                                                                $("#del-user-{{.ID}}").submit();
+                                                            }
+                                                        });
+                                                    });
+                                                    $(".copy-user-click-{{.ID}}").click(function () {
+                                                        swal({
+                                                            title: "Dolen Cofrestru",
+                                                            text: "tts.techiaith.cymru/Reg?hash={{ printf "%s" .RegistrationHash}}",
+                                                            icon: "info",
+                                                            buttons: true,
+                                                            dangerMode: false
+                                                        }).then((copy) => {
+                                                            if (copy) {
+                                                                navigator.clipboard.writeText("tts.techiaith.cymru/Reg?hash={{ printf "%s" .RegistrationHash}}");
+                                                            }
+                                                        });
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card mb-3 h-100">
+                <div class="card-body p-lg-4">
+                    <div class="row g-4 position-relative">
+                        <div class="col">
+                            <h6 class="en">New User</h6>
+                            <h6 class="cy">Defnyddiwr Newydd</h6>
+                            <form method="POST" action='{{url "UserActions.NewUser"}}'  class="bs-validate">
+
+								<div class="form-floating mb-3">
+									<input required placeholder="Ebost | Email" id="account_email" name="email" type="email" class="form-control">
+									<label for="account_email">Email</label>
+								</div>
+
+								<button type="submit" class="btn btn-primary w-100">
+									<i class="fi fi-user-plus "></i>
+								</button>
+
+							</form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "footer.html" .}}

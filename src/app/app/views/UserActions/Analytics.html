@@ -1,0 +1,180 @@
+{{set . "title" "Analytics Dashboard"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreStyles" "app/analytics.css"}}
+{{append . "moreScripts" "js/vendor.chartjs.min.js"}}
+{{append . "moreScripts" "app/chart-utils.js"}}
+{{append . "moreScripts" "app/table-utils.js"}}
+{{append . "moreScripts" "app/analytics.js"}}
+{{template "header.html" .}}
+
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Analytics Dashboard</h1>
+    <h1 class="h2 fw-bold cy">Bwrdd Dadansoddi</h1>
+    <p class="text-muted en">Statistical analysis of ASR model performance for pronunciation learning research</p>
+    <p class="text-muted cy">Dadansoddiad ystadegol o berfformiad model ASR ar gyfer ymchwil dysgu ynganu</p>
+</div>
+
+<div class="container pb-6">
+    <!-- Filter Panel -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title mb-4 en">Filters & Controls</h5>
+            <h5 class="card-title mb-4 cy">Hidlwyr a Rheolyddion</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small en">User</label>
+                    <label class="form-label small cy">Defnyddiwr</label>
+                    <select id="filterUser" class="form-select form-select-sm">
+                        <option value="0">All Users / Pob Defnyddiwr</option>
+                        {{range .users}}
+                        <option value="{{.ID}}">{{.Username}} ({{.Email}})</option>
+                        {{end}}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">&nbsp;</label>
+                    <button id="btnLoadAnalytics" class="btn btn-primary btn-sm w-100">
+                        <i class="fi fi-refresh"></i>
+                        <span class="en">Load Analytics</span>
+                        <span class="cy">Llwytho Dadansoddiad</span>
+                    </button>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small">&nbsp;</label>
+                    <button id="btnExportLaTeX" class="btn btn-success btn-sm w-100" disabled>
+                        <i class="fi fi-download"></i>
+                        <span class="en">Export for LaTeX</span>
+                        <span class="cy">Allforio ar gyfer LaTeX</span>
+                    </button>
+                </div>
+            </div>
+            <div id="loadingIndicator" class="mt-3" style="display:none;">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                </div>
+                <small class="text-muted en">Analyzing data...</small>
+                <small class="text-muted cy">Yn dadansoddi data...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Comparison Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">1. Model Performance Comparison</h5>
+            <h5 class="card-title cy">1. Cymhariaeth Perfformiad Modelau</h5>
+            <p class="small text-muted en">Paired statistical tests comparing Whisper vs Wav2Vec2</p>
+            <p class="small text-muted cy">Profion ystadegol paru yn cymharu Whisper vs Wav2Vec2</p>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <canvas id="chartModelComparison" height="100"></canvas>
+                </div>
+                <div class="col-md-4">
+                    <table class="table table-sm" id="tableModelStats">
+                        <thead>
+                            <tr>
+                                <th class="en">Statistic</th>
+                                <th class="cy">Ystadegyn</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="3" class="text-muted text-center en">No data loaded</td></tr>
+                            <tr><td colspan="3" class="text-muted text-center cy">Dim data wedi'i lwytho</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inter-Rater Reliability Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">2. Inter-Rater Reliability</h5>
+            <h5 class="card-title cy">2. Dibynadwyedd Rhyng-Farnwr</h5>
+            <p class="small text-muted en">Agreement between models on correct/incorrect assessments</p>
+            <p class="small text-muted cy">Cytundeb rhwng modelau ar asesiadau cywir/anghywir</p>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div id="confusionMatrixContainer">
+                        <canvas id="chartConfusionMatrix" height="150"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="p-4 bg-light rounded">
+                        <h6 class="en">Cohen's Kappa</h6>
+                        <h6 class="cy">Kappa Cohen</h6>
+                        <h2 id="kappaValue" class="text-primary">-</h2>
+                        <p id="kappaInterpretation" class="text-muted small">-</p>
+
+                        <hr>
+
+                        <h6 class="en">Agreement Rate</h6>
+                        <h6 class="cy">Cyfradd Cytundeb</h6>
+                        <h3 id="agreementRate" class="text-success">-</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Attribution Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">3. Error Attribution Analysis</h5>
+            <h5 class="card-title cy">3. Dadansoddiad Priodoli Gwallau</h5>
+            <p class="small text-muted en">Distribution of error types across both models</p>
+            <p class="small text-muted cy">Dosbarthiad mathau o wallau ar draws y ddau fodel</p>
+
+            <canvas id="chartErrorAttribution" height="80"></canvas>
+
+            <div class="mt-3 p-3 bg-light rounded">
+                <small class="en"><strong>Chi-square test:</strong> <span id="chiSquareResult">-</span></small>
+                <small class="cy"><strong>Prawf chi-sgwâr:</strong> <span id="chiSquareResult">-</span></small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Learning Curves Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">4. Learning Curves</h5>
+            <h5 class="card-title cy">4. Cromliniau Dysgu</h5>
+            <p class="small text-muted en">Learner progress over time (WER trends)</p>
+            <p class="small text-muted cy">Cynnydd dysgwr dros amser (tueddiadau WER)</p>
+
+            <canvas id="chartLearningCurves" height="80"></canvas>
+        </div>
+    </div>
+
+    <!-- Word Difficulty Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">5. Word Difficulty Rankings</h5>
+            <h5 class="card-title cy">5. Graddfeydd Anhawster Geiriau</h5>
+            <p class="small text-muted en">Top 10 most difficult words for learners</p>
+            <p class="small text-muted cy">10 gair anoddaf i ddysgwyr</p>
+
+            <canvas id="chartWordDifficulty" height="100"></canvas>
+        </div>
+    </div>
+
+    <!-- Correlations Card -->
+    <div class="card mb-4">
+        <div class="card-body p-lg-4">
+            <h5 class="card-title en">6. Correlation Matrix</h5>
+            <h5 class="card-title cy">6. Matrics Cydberthynas</h5>
+            <p class="small text-muted en">Relationships between different metrics</p>
+            <p class="small text-muted cy">Perthnasoedd rhwng metreg gwahanol</p>
+
+            <div id="correlationMatrixContainer">
+                <!-- Custom heatmap grid will be rendered here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+{{template "footer.html" .}}

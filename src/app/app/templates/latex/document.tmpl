@@ -1,0 +1,81 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Dysgair ASR Analysis Report}
+\author{Statistical Analysis Results}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This report presents statistical analysis results from the Dysgair pronunciation learning system, comparing Whisper and Wav2Vec2 ASR models for Welsh language learning.
+
+\section{Model Performance Comparison}
+
+Figure \ref{fig:model_comparison} shows the mean Word Error Rate (WER) and Character Error Rate (CER) for both models.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{charts/model_comparison.png}
+\caption{Mean WER and CER by Model}
+\label{fig:model_comparison}
+\end{figure}
+
+{{if .ModelComparisonStats}}
+\subsection{Statistical Tests}
+
+{{.ModelComparisonStats}}
+{{end}}
+
+\section{Inter-Rater Reliability}
+
+Figure \ref{fig:confusion_matrix} shows the agreement patterns between the two models.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{charts/confusion_matrix.png}
+\caption{Model Agreement Patterns}
+\label{fig:confusion_matrix}
+\end{figure}
+
+{{if .InterRaterStats}}
+{{.InterRaterStats}}
+{{end}}
+
+\section{Error Attribution Analysis}
+
+Figure \ref{fig:error_attribution} shows the distribution of error types across both models.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{charts/error_attribution.png}
+\caption{Error Type Distribution}
+\label{fig:error_attribution}
+\end{figure}
+
+\section{Error Rate Distribution}
+
+Figure \ref{fig:word_difficulty} shows the distribution of ASR error rates across all words, demonstrating overall model performance patterns.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{charts/word_difficulty.png}
+\caption{Error Rate Distribution Histogram}
+\label{fig:word_difficulty}
+\end{figure}
+
+This histogram displays how many words fall into each error rate range (0-10\%, 10-20\%, etc.) for both models. Words clustered in lower error ranges indicate better ASR performance for Welsh pronunciation feedback.
+
+\section{Detailed Statistical Tables}
+
+See the accompanying \texttt{tables.tex} file for detailed statistical tables.
+
+\end{document}

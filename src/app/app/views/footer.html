@@ -1,0 +1,71 @@
+</div>
+
+<!-- Confirmation Modal (Shared across all pages) -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title d-flex align-items-center">
+                    <i data-feather="alert-triangle" class="me-2"></i>
+                    <span class="en">Confirm Action</span>
+                    <span class="cy">Cadarnhau Gweithred</span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmationMessage" class="mb-0"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">
+                    <span class="en">Cancel</span>
+                    <span class="cy">Canslo</span>
+                </button>
+                <button type="button" class="btn btn-sm btn-warning" id="btnConfirmAction">
+                    <span class="en">Confirm</span>
+                    <span class="cy">Cadarnhau</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="section pt-5 pb-0 mb-0 bg-lime position-relative">
+    <svg class="absolute-full z-index-0" width="100%" height="100%" viewBox="0 0 1920 90" preserveAspectRatio="none">
+        <path fill="#d63d3d" d="M1920,0C1217,0,120.574,155.567,0,0v90h1920V0z"></path>
+    </svg>
+</div>
+<footer id="footer" class="logo_bg text-white">
+    <div class="container tet-white py-5 flex-row">
+        <div class="row g-4">
+            <div class="col-12  col-md-6 col-lg-4 mb-1 text-center">
+                <img src="/public/images/logo/logo_uti.png" height="92" alt="">
+            </div>
+            <div class="col-12  col-md-6 col-lg-4 mb-1 text-center">
+                <p class="small mb-0">© <span id="cc-year">1884</span> Prifysgol Bangor University.</p>
+                    <p class="small mb-0 en">All rights reserved.</p>
+                    <p class="small mb-0 cy">Cedwir pob hawl.</p>
+            </div>
+            <div class="col-12  col-md-6 col-lg-4 mb-1 text-center">
+                <img src="/public/images/logo/bu_logo.png" alt="">
+            </div>
+        </div>
+    </div>
+</footer>
+{{if .DevMode}}
+    {{template "debug.html" .}}
+{{end}}
+{{template "cookies.html" .}}
+<script src="/public/js/core.min.js"></script>
+<script src="/public/js/vendor_bundle.min.js"></script>
+<script src="https://unpkg.com/feather-icons"></script>
+<script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+<script src="https://cdn.WebRTC-Experiment.com/MediaStreamRecorder.js"></script>
+<script src="/public/js/essential_audio.js"></script>
+<script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<script src="/public/js/jquery.json-editor.min.js"></script>
+<script src="/public/app/common.js" type="text/javascript" charset="utf-8"></script>
+{{range .moreScripts}}
+    <script src="/public/{{.}}" type="text/javascript" charset="utf-8"></script>
+{{end}}
+</body>
+</html>

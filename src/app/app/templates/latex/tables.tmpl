@@ -1,0 +1,35 @@
+% Include this file in your main document with \input{tables.tex}
+
+\section{Detailed Statistical Tables}
+
+{{if .ModelComparisonTable}}
+\subsection{Model Comparison Statistics}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lcc}
+\toprule
+Metric & Whisper & Wav2Vec2 \\
+\midrule
+{{.ModelComparisonTable}}
+\bottomrule
+\end{tabular}
+\caption{Detailed Model Performance Metrics}
+\end{table}
+{{end}}
+
+{{if .WordDifficultyTable}}
+\subsection{Words with Highest ASR Error Rates}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Word & Attempts & Whisper WER & Wav2Vec2 WER \\
+\midrule
+{{.WordDifficultyTable}}
+\bottomrule
+\end{tabular}
+\caption{Top 10 Words with Highest ASR Error Rates (detailed breakdown)}
+\end{table}
+{{end}}

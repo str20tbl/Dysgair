@@ -1,0 +1,181 @@
+{{set . "title" "Home"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{template "header.html" .}}
+<div class="container py-5">
+    <h1 class="h2 fw-bold en">Admin</h1>
+    <h1 class="h2 fw-bold cy">Gweinyddwr</h1>
+</div>
+<div class="container pb-6">
+    <div class="row">
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card mb-3 h-100">
+                <div class="card-body p-lg-4">
+                    <div class="row g-4 position-relative">
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                <tr>
+                                    <th>Enw</th>
+                                    <th>E-bost</th>
+                                    <th>ID</th>
+                                    <th><i class="fi fi-dots-horizontal-full"></i></th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                {{range .users}}
+                                <tr>
+                                    <td>{{.FirstName}} {{.LastName}}</td>
+                                    <td>{{.Email}}</td>
+                                    <td>{{.ID}}</td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <a class="dropdown-toggle js-stoppropag" href="#"
+                                               role="button" id="exDropdown" data-bs-toggle="dropdown"
+                                               aria-expanded="false">
+                                                <i class="fi fi-dots-horizontal-full"></i>
+                                            </a>
+
+                                            <ul class="dropdown-menu" aria-labelledby="exDropdown" style="">
+                                                <li><a class="dropdown-item cy copy-user-click-{{.ID}}" href="#">Copïo dolen cofrestru</a></li>
+                                                <li><a class="dropdown-item cy recover-recordings-click-{{.ID}}" href="#">Adfer recordiadau coll</a></li>
+                                                <li><a class="dropdown-item cy del-user-click-{{.ID}}" href="#">Dileu</a></li>
+                                                <li><a class="dropdown-item en copy-user-click-{{.ID}}" href="#">Copy registration link</a></li>
+                                                <li><a class="dropdown-item en recover-recordings-click-{{.ID}}" href="#">Recover orphaned recordings</a></li>
+                                                <li><a class="dropdown-item en del-user-click-{{.ID}}" href="#">Delete</a></li>
+                                            </ul>
+                                            <form action="{{url "UserManagement.DeleteUser"}}" id="del-user-{{.ID}}" method="POST">
+                                                <input type="hidden" name="id" value="{{.ID}}">
+                                            </form>
+                                            <script type="text/javascript">
+                                                $(function () {
+                                                    $(".del-user-click-{{.ID}}").click(function () {
+                                                        swal({
+                                                            title: "Rhybudd",
+                                                            text: "Dileu y defnyddiwr yma?",
+                                                            icon: "warning",
+                                                            buttons: true,
+                                                            dangerMode: true
+                                                        }).then((willDelete) => {
+                                                            if (willDelete) {
+                                                                $("#del-user-{{.ID}}").submit();
+                                                            }
+                                                        });
+                                                    });
+                                                    $(".copy-user-click-{{.ID}}").click(function () {
+                                                        swal({
+                                                            title: "Dolen Cofrestru",
+                                                            text: "tts.techiaith.cymru/Reg?hash={{ printf "%s" .RegistrationHash}}",
+                                                            icon: "info",
+                                                            buttons: true,
+                                                            dangerMode: false
+                                                        }).then((copy) => {
+                                                            if (copy) {
+                                                                navigator.clipboard.writeText("tts.techiaith.cymru/Reg?hash={{ printf "%s" .RegistrationHash}}");
+                                                            }
+                                                        });
+                                                    });
+                                                    $(".recover-recordings-click-{{.ID}}").click(function () {
+                                                        swal({
+                                                            title: "Recover Orphaned Recordings",
+                                                            text: "This will scan /data/recordings for files not in the database, transcribe them, and match to words. Continue?",
+                                                            icon: "warning",
+                                                            buttons: true,
+                                                            dangerMode: false
+                                                        }).then((willRecover) => {
+                                                            if (willRecover) {
+                                                                // Show loading
+                                                                swal({
+                                                                    title: "Processing...",
+                                                                    text: "Scanning and recovering orphaned recordings. This may take several minutes.",
+                                                                    icon: "info",
+                                                                    buttons: false,
+                                                                    closeOnClickOutside: false,
+                                                                    closeOnEsc: false
+                                                                });
+
+                                                                // Call recovery endpoint
+                                                                $.ajax({
+                                                                    url: '/Admin/RecoverOrphanedRecordings',
+                                                                    type: 'POST',
+                                                                    data: { userID: {{.ID}} },
+                                                                    success: function(response) {
+                                                                        const data = response.data;
+                                                                        let message = `Orphaned: ${data.orphaned_count}\n` +
+                                                                                    `Processed: ${data.processed_count}\n` +
+                                                                                    `Failed: ${data.failed_count}\n` +
+                                                                                    `Created: ${data.entries_created.length} entries`;
+
+                                                                        if (data.failures && data.failures.length > 0) {
+                                                                            message += '\n\nFailures:\n' + data.failures.slice(0, 5).join('\n');
+                                                                            if (data.failures.length > 5) {
+                                                                                message += `\n... and ${data.failures.length - 5} more`;
+                                                                            }
+                                                                        }
+
+                                                                        swal({
+                                                                            title: "Recovery Complete",
+                                                                            text: message,
+                                                                            icon: "success",
+                                                                            buttons: true
+                                                                        });
+                                                                    },
+                                                                    error: function(xhr, status, error) {
+                                                                        let errorMsg = "Unknown error";
+                                                                        try {
+                                                                            const response = JSON.parse(xhr.responseText);
+                                                                            errorMsg = response.error || response.message || errorMsg;
+                                                                        } catch(e) {
+                                                                            errorMsg = xhr.responseText || error;
+                                                                        }
+
+                                                                        swal({
+                                                                            title: "Recovery Failed",
+                                                                            text: errorMsg,
+                                                                            icon: "error",
+                                                                            buttons: true
+                                                                        });
+                                                                    }
+                                                                });
+                                                            }
+                                                        });
+                                                    });
+                                                });
+                                            </script>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{end}}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-md-6 mb-3">
+            <div class="card mb-3 h-100">
+                <div class="card-body p-lg-4">
+                    <div class="row g-4 position-relative">
+                        <div class="col">
+                            <h6 class="en">New User</h6>
+                            <h6 class="cy">Defnyddiwr Newydd</h6>
+                            <form method="POST" action='{{url "UserManagement.NewUser"}}'  class="bs-validate">
+
+								<div class="form-floating mb-3">
+									<input required placeholder="Ebost | Email" id="account_email" name="email" type="email" class="form-control">
+									<label for="account_email">Email</label>
+								</div>
+
+								<button type="submit" class="btn btn-primary w-100">
+									<i class="fi fi-user-plus "></i>
+								</button>
+
+							</form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "footer.html" .}}

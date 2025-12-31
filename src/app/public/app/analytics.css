@@ -1,0 +1,104 @@
+/**
+ * Dysgair Analytics Page Styles
+ * Styles for analytics dashboard with loading indicators
+ */
+
+/* Loading indicator */
+#loadingIndicator {
+    display: none;
+}
+
+/* Progress bar */
+.progress-bar-full-width {
+    width: 100%;
+}
+
+/* Character Error Analysis */
+
+/* Confusion matrix table container */
+.confusion-matrix-container {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    margin-bottom: 1rem;
+}
+
+/* Confusion matrix table styling */
+.confusion-matrix-table {
+    font-size: 0.85rem;
+    width: 100%;
+}
+
+.confusion-matrix-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.confusion-matrix-table td,
+.confusion-matrix-table th {
+    text-align: center;
+    vertical-align: middle;
+    padding: 0.5rem;
+}
+
+/* Heatmap color coding for error frequencies */
+.confusion-matrix-table .heatmap-cell {
+    transition: all 0.2s ease;
+}
+
+/* Color scale: light yellow -> orange -> red for increasing error counts */
+.confusion-matrix-table .heatmap-1 {
+    background-color: #fff9e6;
+}
+
+.confusion-matrix-table .heatmap-2 {
+    background-color: #fff3cd;
+}
+
+.confusion-matrix-table .heatmap-3 {
+    background-color: #ffe5a1;
+}
+
+.confusion-matrix-table .heatmap-4 {
+    background-color: #ffd98e;
+}
+
+.confusion-matrix-table .heatmap-5 {
+    background-color: #ffcc7a;
+}
+
+.confusion-matrix-table .heatmap-6 {
+    background-color: #ffbf66;
+}
+
+.confusion-matrix-table .heatmap-7 {
+    background-color: #ffb84d;
+}
+
+.confusion-matrix-table .heatmap-8 {
+    background-color: #ff9933;
+}
+
+.confusion-matrix-table .heatmap-9 {
+    background-color: #ff8533;
+}
+
+.confusion-matrix-table .heatmap-10 {
+    background-color: #ff6633;
+}
+
+/* Empty state for tables */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+}
+
+/* Character error chart container */
+.char-error-chart-container {
+    height: 400px;
+    position: relative;
+}

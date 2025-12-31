@@ -1,0 +1,216 @@
+{{set . "title" "Home"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreStyles" "app/recording.css"}}
+{{template "header.html" .}}
+<!-- main -->
+<main id="middle" class="flex-fill mx-auto">
+    <div class="container mt-4">
+        <div class="row">
+
+            <!-- LEFT CARD: Recording Controls -->
+            <div class="col-lg-6 col-12 order-lg-0 mb-4 mb-lg-0">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body text-center p-4">
+
+                        <!-- Word Display -->
+                        <div class="mb-4">
+                            <p class="h5 mb-2 text-muted cy">Dywedwch y gair yma:</p>
+                            <p class="h5 mb-2 text-muted en">Say this word:</p>
+                            <div class="word-display mt-3" id="wordDisplay" data-word="{{.entry.Text}}" data-word-id="{{.entry.WordID}}">
+                                <div class="display-6 fw-medium mb-2">{{.entry.Text}}</div>
+                                {{if .entry.English}}
+                                <div class="h5 text-muted">({{.entry.English}})</div>
+                                {{end}}
+                            </div>
+                        </div>
+
+                        <!-- Audio Controls -->
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                            <button id="playButton" class="btn btn-outline-success btn-sm" title="Listen to example">
+                                <i data-feather="headphones"></i>
+                                <span class="ms-1 cy">Gwrando</span>
+                                <span class="ms-1 en">Listen</span>
+                            </button>
+                        </div>
+
+                        <!-- Recording Controls -->
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-3">
+                            <button id="start-recording" class="btn btn-danger btn-lg">
+                                <i data-feather="mic"></i>
+                                <span class="ms-2 cy">Recordio</span>
+                                <span class="ms-2 en">Record</span>
+                            </button>
+                            <button id="stop-recording" class="btn btn-secondary" disabled>
+                                <i data-feather="stop-circle"></i>
+                                <span class="ms-1 cy">Stopio</span>
+                                <span class="ms-1 en">Stop</span>
+                            </button>
+                        </div>
+
+                        <!-- Navigation Controls -->
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+                            <a href="#" id="rewind-recording" class="btn btn-outline-primary btn-sm" data-action="reset" title="Reset to first word">
+                                <i data-feather="rewind"></i>
+                            </a>
+                            <a href="#" id="previous-recording" class="btn btn-outline-primary btn-sm" data-action="prev" title="Previous word">
+                                <i data-feather="arrow-left-circle"></i>
+                            </a>
+                            <a href="#"
+                               id="next-recording"
+                               class="btn btn-outline-primary btn-sm {{if not .isComplete}}disabled opacity-50{{end}}"
+                               data-action="next"
+                               {{if not .isComplete}}title="Complete 5 recordings to unlock"{{else}}title="Next word"{{end}}>
+                                <i data-feather="arrow-right-circle"></i>
+                            </a>
+                            <a href="#" id="fast-forward-recording" class="btn btn-outline-primary btn-sm" data-action="jumpNext">
+                                <i data-feather="fast-forward"></i>
+                            </a>
+                        </div>
+
+                        <!-- Recording Status -->
+                        <div id="recording-status" class="p-3 rounded">
+                            <div class="d-flex align-items-center justify-content-center gap-3">
+                                <div id="recording-dot"></div>
+                                <div id="status-text" class="fw-bold">
+                                    <span class="cy">Barod i recordio</span>
+                                    <span class="en">Ready to record</span>
+                                </div>
+                                <div id="recording-timer">00:00</div>
+                            </div>
+                            <div id="status-message" class="mt-2 small text-muted"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT CARD: Feedback -->
+            <div class="col-lg-6 col-12 order-lg-1">
+                <div class="card shadow-sm h-100">
+                    <!-- Progress Header -->
+                    <div class="card-header bg-light py-3">
+                        <div class="mb-3">
+                            <h5 class="mb-0">
+                                <span class="cy">Adborth</span>
+                                <span class="en">Feedback</span>
+                            </h5>
+                        </div>
+
+                        <!-- Overall Dataset Progress -->
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-globe me-1"></i>
+                                    <span class="cy">Cynnydd Cyffredinol</span>
+                                    <span class="en">Overall Progress</span>
+                                </small>
+                                <small class="text-success fw-bold" id="overall-pct-label">
+                                    {{if .OverallPercentage}}{{printf "%.1f" .OverallPercentage}}{{else}}0.0{{end}}%
+                                </small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar bg-success"
+                                     id="compact-overall-bar"
+                                     style="width: {{if .OverallPercentage}}{{.OverallPercentage}}{{else}}0{{end}}%"
+                                     aria-valuenow="{{if .OverallPercentage}}{{.OverallPercentage}}{{else}}0{{end}}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     role="progressbar">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block text-center mt-1" id="compact-progress">
+                                {{if .CompletedWordsCount}}{{.CompletedWordsCount}}{{else}}0{{end}}/{{if .TotalWordsCount}}{{.TotalWordsCount}}{{else}}979{{end}}
+                                <span class="cy"> gair wedi'u cwblhau</span>
+                                <span class="en"> words completed</span>
+                            </small>
+                        </div>
+
+                        <!-- Current Word Progress -->
+                        <div class="mb-0">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <small class="text-muted">
+                                    <i class="bi bi-file-text me-1"></i>
+                                    <span class="cy">Gair Cyfredol</span>
+                                    <span class="en">Current Word</span>
+                                </small>
+                                <small class="fw-bold {{if .isComplete}}text-success{{else}}text-warning{{end}}" id="word-pct-label">
+                                    {{if .WordPercentage}}{{.WordPercentage}}{{else}}0{{end}}%
+                                </small>
+                            </div>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar {{if .isComplete}}bg-success{{else}}bg-warning{{end}}"
+                                     id="compact-word-bar"
+                                     style="width: {{if .WordPercentage}}{{.WordPercentage}}{{else}}0{{end}}%"
+                                     aria-valuenow="{{if .WordPercentage}}{{.WordPercentage}}{{else}}0{{end}}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"
+                                     role="progressbar">
+                                </div>
+                            </div>
+                            <small class="text-muted d-block text-center mt-1" id="compact-word-progress">
+                                {{.recordingCount}}/5
+                                <span class="cy"> recordiad</span>
+                                <span class="en"> recordings</span>
+                                {{if .isComplete}}<i class="bi bi-check-circle-fill text-success ms-1"></i>{{end}}
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <!-- Single Feedback Table (Whisper-only, most recent on top) -->
+                        <div id="feedback-section">
+                            <div class="small text-muted text-center mb-3">
+                                <span class="text-success">■</span> <span class="cy">Cywir</span><span class="en">Correct</span>
+                                &nbsp;&nbsp;
+                                <span class="text-danger">■</span> <span class="cy">Anghywir</span><span class="en">Error</span>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-sm table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 40px;" class="text-center">#</th>
+                                            <th>
+                                                <span class="cy">Ymgais</span>
+                                                <span class="en">Attempt</span>
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="feedback-table-body">
+                                        {{if .entries}}
+                                            {{$recordingCount := .recordingCount}}
+                                            {{range $index, $entry := .entries}}
+                                            {{$attemptNum := sub $recordingCount $index}}
+                                            <tr {{if eq $index 0}}class="table-success"{{end}}>
+                                                <td class="fw-bold text-center">{{$attemptNum}}</td>
+                                                <td class="coloured-feedback"
+                                                    data-target="{{$entry.Text}}"
+                                                    data-whisper="{{$entry.AttemptWhisper}}">
+                                                    <!-- JavaScript will populate colored diff -->
+                                                </td>
+                                            </tr>
+                                            {{end}}
+                                        {{else}}
+                                            <tr>
+                                                <td colspan="2" class="text-center text-muted py-4">
+                                                    <i class="bi bi-mic-mute"></i><br>
+                                                    <span class="cy">Dim recordiadau eto</span>
+                                                    <span class="en">No recordings yet</span>
+                                                </td>
+                                            </tr>
+                                        {{end}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+{{append . "moreScripts" "app/dysgair-recorder.js"}}
+{{template "footer.html" .}}

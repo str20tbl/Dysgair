@@ -1,0 +1,161 @@
+{{set . "title" "Home"}}
+{{append . "moreStyles" "app/layout.css"}}
+{{append . "moreScripts" "app/common.js"}}
+{{template "header.html" .}}
+<div class="container py-7">
+    <section>
+        <div class="row">
+            <div class="col-md-8 col-sm-12">
+                <h3 class="pb-3 border-bottom"><span class="en">Voices</span><span class="cy">Lleisiau</span></h3>
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th><span class="en">Voice</span><span class="cy">Llais</span></th>
+                            <th>ID</th>
+                            <th>#</th>
+                            <th><span class="en">Actions</span><span class="cy">Gweithredoedd</span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {{range .users}}
+                    <tr>
+                        <td>
+                            <a href="/Voice?uuid={{.UUID}}">{{.Username}}</a>
+                        </td>
+                        <td><small>{{.UUID}}</small></td>
+                        <td>{{.Count}}</td>
+                        <td>
+                            <div class="row">
+                                <div class="form">
+                                    <button class="btn btn-sm p-1 m-1 btn-soft btn-warning" id="record-click-{{.UUID}}">
+                                        <i class="action" data-feather="mic"></i>
+                                    </button>
+                                    <button class="btn btn-sm p-1 m-1 btn-soft btn-primary" id="review-click-{{.UUID}}">
+                                        <i class="action" data-feather="edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm p-1 m-1 btn-soft btn-success" id="manage-click-{{.UUID}}">
+                                        <i class="action" data-feather="headphones"></i>
+                                    </button>
+                                    <button class="btn btn-sm p-1 m-1 btn-soft btn-secondary"
+                                            id="export-click-{{.UUID}}">
+                                        <i class="action" data-feather="download"></i>
+                                    </button>
+                                    <button class="btn btn-sm p-1 m-1 btn-soft btn-danger"
+                                            id="del-user-click-{{.UUID}}">
+                                        <i class="action" data-feather="trash-2"></i>
+                                    </button>
+                                </div>
+                                <form action='{{url "Manage.DelVoice"}}' id="del-user-{{.UUID}}" method="POST">
+                                    <input type="hidden" name="id" value="{{.ID}}">
+                                </form>
+                                <form action='{{url "Recording.Record"}}' id="record-{{.UUID}}" method="GET"
+                                      class="d-inline col">
+                                    <input type="hidden" name="uuid" value="{{.UUID}}">
+                                </form>
+                                <form action='{{url "Manage.Prompts"}}' id="review-{{.UUID}}" method="GET"
+                                      class="d-inline col">
+                                    <input type="hidden" name="uuid" value="{{.UUID}}">
+                                </form>
+                                <form action='{{url "Manage.Index"}}' id="manage-{{.UUID}}" method="GET"
+                                      class="d-inline col">
+                                    <input type="hidden" name="uuid" value="{{.UUID}}">
+                                </form>
+                                <form action='{{url "Voice.ExportVoice"}}' id="export-{{.UUID}}" method="POST">
+                                    <input type="hidden" name="uuid" value="{{.UUID}}">
+                                </form>
+                                <script type="text/javascript">
+                                    $(function () {
+                                        $("#record-click-{{.UUID}}").click(function () {
+                                            $("#record-{{.UUID}}").submit()
+                                        });
+                                    });
+                                    $(function () {
+                                        $("#manage-click-{{.UUID}}").click(function () {
+                                            $("#manage-{{.UUID}}").submit()
+                                        });
+                                    });
+                                    $(function () {
+                                        $("#review-click-{{.UUID}}").click(function () {
+                                            $("#review-{{.UUID}}").submit()
+                                        });
+                                    });
+                                    $(function () {
+                                        $("#export-click-{{.UUID}}").click(function () {
+                                            swal({
+                                                title: "Rhybudd",
+                                                text: "Allforio'r lais yma?",
+                                                icon: "warning",
+                                                buttons: true,
+                                                dangerMode: true,
+                                            }).then((willDelete) => {
+                                                if (willDelete) {
+                                                    $("#export-{{.UUID}}").submit();
+                                                }
+                                            });
+                                        });
+                                    });
+                                    $(function () {
+                                        $("#del-user-click-{{.UUID}}").click(function () {
+                                            swal({
+                                                title: "Rhybudd",
+                                                text: "Dileu y llais yma?",
+                                                icon: "warning",
+                                                buttons: true,
+                                                dangerMode: true,
+                                            }).then((willDelete) => {
+                                                if (willDelete) {
+                                                    $("#del-user-{{.UUID}}").submit();
+                                                }
+                                            });
+                                        });
+                                    });
+                                </script>
+                            </div>
+                        </td>
+                    </tr>
+                        {{end}}
+                        </tbody>
+                    </table>
+                </div>
+                <script>
+                    // Render feather icons and initialize language toggle
+                    $(function() {
+                        if (typeof feather !== 'undefined') {
+                            feather.replace();
+                        }
+                        if (typeof initLanguageToggle === 'function') {
+                            initLanguageToggle();
+                        }
+                    });
+                </script>
+            </div>
+            <div class="border-left col-md-4 col-sm-12">
+                <h3 class="pb-3 border-bottom"><span class="en">New Voice</span><span class="cy">Llais Newydd</span></h3>
+                <table class="table">
+                    <thead>
+                    <th><span class="en">Name</span><span class="cy">Enw</span></th>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td>
+                            <form class="" action='{{url "Manage.NewVoice"}}' method="post">
+                                <div class="form-group">
+                                    <div class="input-group">
+                                        <input class="form-control" id="form-1-email" type="text" name="username"
+                                               placeholder="Name / Enw">
+                                        <button class="btn btn-info input-group-text" type="submit">
+                                            <i class="add-on" data-feather="plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{{template "footer.html" .}}

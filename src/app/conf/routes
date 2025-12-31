@@ -1,0 +1,73 @@
+# Routes Config
+#
+# This file defines all application routes (Higher priority routes first)
+#
+
+module:testrunner
+module:jobs
+POST    /Login                                  App.Login
+POST    /Upload                                 Dysgair.Upload
+POST    /RegUser                                App.RegUser
+POST    /NewUser                                UserManagement.NewUser
+POST    /DeleteUser                             UserManagement.DeleteUser
+POST    /UpdatePassword                         UserManagement.UpdatePassword
+POST    /UpdateEmail                            UserManagement.UpdateEmail
+POST    /UpdateUserNames                        UserManagement.UpdateUserNames
+POST    /PasswordReset                          App.PasswordReset
+
+GET     /                                       App.Index
+GET     /Reg                                    App.Reg
+GET     /Register                               App.Register
+GET     /Logout                                 App.Logout
+GET     /Confirm                                App.Confirm
+GET     /Reset                                  App.Reset
+GET     /Admin                                  UserManagement.Admin
+GET     /Profile                                UserManagement.Profile
+GET     /Admin/Transcriptions                   TranscriptionReview.Index
+GET     /Admin/Transcriptions/Get               TranscriptionReview.GetTranscriptions
+POST    /Admin/Transcriptions/Update            TranscriptionReview.UpdateHumanTranscription
+POST    /Admin/Transcriptions/Review            TranscriptionReview.MarkAsReviewed
+POST    /Admin/Transcriptions/Delete            TranscriptionReview.DeleteEntry
+GET     /Admin/Transcriptions/Export            TranscriptionReview.ExportTranscriptions
+POST    /Admin/Transcriptions/RecalculateAll    TranscriptionReview.RecalculateAllMetrics
+POST    /Admin/RecoverOrphanedRecordings        Analytics.RecoverOrphanedRecordings
+GET     /Admin/Recovery                         RecoveryDashboard.Index
+POST    /Admin/Recovery/Start                   RecoveryDashboard.StartSession
+GET     /Admin/Recovery/Progress                RecoveryDashboard.GetProgress
+GET     /Admin/Recovery/ManualReviewList        RecoveryDashboard.GetManualReviewList
+GET     /Admin/Recovery/ProcessedRecordings     RecoveryDashboard.GetProcessedRecordings
+GET     /Admin/Recovery/Next                    RecoveryDashboard.GetNextRecording
+POST    /Admin/Recovery/Verify                  RecoveryDashboard.VerifyMatch
+POST    /Admin/Recovery/Skip                    RecoveryDashboard.SkipRecording
+POST    /Admin/Recovery/UpdateWord              RecoveryDashboard.UpdateWord
+GET     /Admin/Recovery/Words                   RecoveryDashboard.GetAllWords
+GET     /Admin/Recovery/Stats                   RecoveryDashboard.GetRecoveryStats
+POST    /Admin/Recovery/Reset                   RecoveryDashboard.ResetSession
+GET     /Admin/Analytics                        Analytics.Index
+POST    /Admin/Analytics/Run                    Analytics.RunAnalysis
+POST    /Admin/Analytics/ExportLaTeX            Analytics.ExportLaTeX
+POST    /Admin/Analytics/ExportSection          Analytics.ExportSection
+GET     /Admin/DownloadExport                   Analytics.DownloadExport
+GET     /Dysgair                                Dysgair.Index
+GET     /PlayAudio                              Dysgair.PlayAudio
+GET     /PlayRecording                          TranscriptionReview.PlayRecording
+POST    /IncrementProgress                      Dysgair.IncrementProgressID
+POST    /DecrementProgress                      Dysgair.DecrementProgressID
+POST    /ResetProgress                          Dysgair.ResetProgress
+POST    /JumpToNextIncomplete                   Dysgair.JumpToNextIncomplete
+
+# Ignore favicon requests
+GET     /favicon.ico                            404
+
+# Map static resources from the /app/public folder to the /public path
+GET     /public/*filepath                       Static.Serve("public")
+
+# Catch all, this will route any request into the controller path
+#
+#                    **** WARNING ****
+# Enabling this exposes any controller and function to the web.
+# ** This is a serious security issue if used online **
+#
+# For rapid development uncomment the following to add new controller.action endpoints
+# without having to add them to the routes table.
+# *       /:controller/:action                    :controller.:action

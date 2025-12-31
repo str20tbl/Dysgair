@@ -1,0 +1,44 @@
+/**
+ * Dysgair Global Layout Styles
+ * Core application-wide styles for consistent branding and typography
+ */
+
+/* Alert positioning */
+.alert-box {
+    position: fixed;
+    top: 10%;
+}
+
+/* Logo branding */
+.logo_text {
+    color: #424543;
+}
+
+.logo_bg {
+    background-color: #d63d3d;
+}
+
+/* Card components */
+.card-body {
+    color: #424543 !important;
+}
+
+/* Navigation */
+.nav-link {
+    color: #424543 !important;
+}
+
+.navbar-light .navbar-nav .nav-item:hover > .nav-link,
+.navbar-light .navbar-nav .nav-link[aria-expanded=true] {
+    font-weight: bold;
+    color: #424543 !important;
+}
+
+/* Typography */
+body {
+    color: #424543 !important;
+}
+
+.table {
+    color: #424543 !important;
+}

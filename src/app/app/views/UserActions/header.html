@@ -1,0 +1,12 @@
+<div class="d-grid gap-3" style="grid-template-columns: 1fr 1fr;">
+  <h3>{{.voiceTitle}} Llais</h3>
+  <div class="">
+    <form class="" action="{{.parent}}" method="get" id="back-form">
+      <input type="hidden" name="uuid" value="{{.user.UUID}}">
+    </form>
+    <a class="float-right text-primary" href="#" onclick="$('#back-form').submit();">
+      <i data-feather="chevron-left"></i>
+    </a>
+  </div>
+</div>
+<p>{{.user.Username}} <small>({{.user.UUID}})</small> </p>
